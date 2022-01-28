@@ -17,8 +17,7 @@ class bcolors:
     UNDERLINE = '\033[4m'
 
 def showMP3Info(fileNameWithPath):
-    #print (bcolors.OKGREEN + "[ID3] M" + bcolors.ENDC)
-    print (fileNameWithPath)
+    print (bcolors.OKGREEN + fileNameWithPath + bcolors.ENDC)
     audio = MP3(fileNameWithPath, ID3=EasyID3)
     print (audio.pprint())
 
@@ -148,6 +147,7 @@ def convert_songname_on_metadata(songName):
 
     return metadata
 
+#youtubedl
 def add_metadata_song(MUSIC_PATH, albumName, artist, songName):
     path=MUSIC_PATH
 
@@ -203,7 +203,7 @@ def add_metadata_song(MUSIC_PATH, albumName, artist, songName):
     print (audio.pprint())
     return newFileNameWithPath
 
-
+# youtubedl
 def add_metadata_playlist(PLAYLISTS_PATH, trackNumber, playlistName, artist, songName):
     path=os.path.join(PLAYLISTS_PATH,playlistName)
     albumName="YT "+playlistName
@@ -259,8 +259,7 @@ def add_metadata_playlist(PLAYLISTS_PATH, trackNumber, playlistName, artist, son
     print (audio.pprint())
     return newFileNameWithPath
 
-
-def update_metadata(PLAYLISTS_PATH, playlistName):
+def update_metadata_youtube(PLAYLISTS_PATH, playlistName):
       path=os.path.join(PLAYLISTS_PATH,playlistName)
       albumName="YT "+playlistName
       newFilesList = []
@@ -286,10 +285,35 @@ def update_metadata(PLAYLISTS_PATH, playlistName):
         metatag['title'] = metadataSongName['title']
         metatag.save()
         print(bcolors.OKGREEN + "[ID3] Added metadata" + bcolors.ENDC)
-        audio = MP3(newFileNameWithPath, ID3=EasyID3)
+        showMP3Info(newFileNameWithPath)
+      return newFilesList  
+
+def update_metadata(catalog, albumName):
+      newFilesList = []
+
+      filesList = [f for f in os.listdir(catalog) if f.endswith(".mp3")]
+      filesList.sort()
+      for x in range(len(filesList)):
+        originalFileName = filesList[x]
+
+        newFileName = rename_song_file(catalog, originalFileName)
+        newSongName = newFileName.replace(".mp3", "")
+        
+        metadataSongName = convert_songname_on_metadata(newSongName)
+        newFileNameWithPath = os.path.join(catalog, newFileName)
+        if not os.path.isfile(newFileNameWithPath):
+            warningInfo="WARNING: %s not exist"%(newFileName)
+            warnings.warn(warningInfo, Warning)
+            print(bcolors.WARNING + warningInfo + bcolors.ENDC)
+            continue
+        metatag = EasyID3(newFileNameWithPath)
+        metatag['album'] = albumName
+        metatag['artist'] = metadataSongName['artist']
+        metatag['title'] = metadataSongName['title']
+        metatag.save()
         newFilesList.append(newFileNameWithPath)
-        print (newFileNameWithPath)
-        print (audio.pprint())
+        print(bcolors.OKGREEN + "[ID3] Added metadata" + bcolors.ENDC)
+        showMP3Info(newFileNameWithPath)
       return newFilesList  
 
 
