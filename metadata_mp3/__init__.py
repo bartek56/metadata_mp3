@@ -16,6 +16,13 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+def showMP3Info(fileNameWithPath):
+    #print (bcolors.OKGREEN + "[ID3] M" + bcolors.ENDC)
+    print (fileNameWithPath)
+    audio = MP3(fileNameWithPath, ID3=EasyID3)
+    print (audio.pprint())
+
+
 def convert_song_name(songName):
     songName = songName.replace(" -", " - ")
     songName = songName.replace("- ", " - ")
@@ -290,10 +297,23 @@ def setAlbum(catalog, albumName):
     filesList = [f for f in os.listdir(catalog) if f.endswith(".mp3")]
     filesList.sort()
     for fileName in filesList:
-        print(fileName)
         fileNameWithPath = os.path.join(catalog, fileName)
         metatag = EasyID3(fileNameWithPath)
         metatag['album'] = albumName
         metatag.save()
+        showMP3Info(fileNameWithPath)
+
+    return filesList
+
+def setArtist(catalog, artistName):
+    filesList = [f for f in os.listdir(catalog) if f.endswith(".mp3")]
+    filesList.sort()
+    for fileName in filesList:
+        print(fileName)
+        fileNameWithPath = os.path.join(catalog, fileName)
+        metatag = EasyID3(fileNameWithPath)
+        metatag['artist'] = artistName
+        metatag.save()
+        showMP3Info(fileNameWithPath)
 
     return filesList
