@@ -173,5 +173,36 @@ class TestUpdateMetadata(TestCase):
         shutil.rmtree(os.path.join(currentDirectory,albumTest))
 
 
+class TestSetAlbum(TestCase):
+    def test_1(self):
+        originalTestFileName = "test.mp3"
+        testFileName1 = "test1.mp3"
+        testFileName2 = "test2.mp3"
+        testCatalog = "test_1"
+
+        currentDirectory = os.path.dirname(os.path.realpath(__file__))
+        originalTestFileNameWithPath = os.path.join(currentDirectory,originalTestFileName)
+        testCatalogWithPath = os.path.join(currentDirectory, testCatalog)
+
+
+        if not os.path.exists(testCatalogWithPath):
+            os.mkdir(testCatalogWithPath)
+        testFileNameWithPath = os.path.join(currentDirectory,testCatalog, testFileName1)
+        shutil.copy(originalTestFileNameWithPath, testFileNameWithPath)
+        testFileNameWithPath = os.path.join(currentDirectory,testCatalog, testFileName2)
+        shutil.copy(originalTestFileNameWithPath, testFileNameWithPath)
+
+        newFilesList = metadata_mp3.setAlbum(testCatalogWithPath, "album test")
+        for newFile in newFilesList:
+            newFileWithPath = os.path.join(testCatalogWithPath,newFile)
+            self.assertTrue(os.path.isfile(newFileWithPath))
+            metatag = EasyID3(newFileWithPath)
+            self.assertEqual(metatag['album'][0], "album test")
+
+    
+        shutil.rmtree(os.path.join(currentDirectory,testCatalog))
+       
+
+
 if __name__=='__main__':
     unittest.main()

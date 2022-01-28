@@ -285,3 +285,15 @@ def update_metadata(PLAYLISTS_PATH, playlistName):
         print (audio.pprint())
       return newFilesList  
 
+
+def setAlbum(catalog, albumName):
+    filesList = [f for f in os.listdir(catalog) if f.endswith(".mp3")]
+    filesList.sort()
+    for fileName in filesList:
+        print(fileName)
+        fileNameWithPath = os.path.join(catalog, fileName)
+        metatag = EasyID3(fileNameWithPath)
+        metatag['album'] = albumName
+        metatag.save()
+
+    return filesList
