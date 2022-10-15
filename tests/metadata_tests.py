@@ -3,10 +3,13 @@ import shutil
 from unittest import TestCase
 import sys
 import os
-import metadata_mp3
+import sys
 import shutil
 import unittest
 from mutagen.easyid3 import EasyID3
+
+sys.path.append("..")
+import metadata_mp3
 
 
 class TestRenameSongName(TestCase):
