@@ -26,6 +26,10 @@ def convert_song_name(songName):
     songName = songName.replace(" -", " - ")
     songName = songName.replace("- ", " - ")
 
+    songName = songName.replace("｜", "")
+    songName = songName.replace("⧸", "")
+    songName = songName.replace("Lyrics", "")
+
     songName = songName.replace("(Oficial Video HD)", "")
     songName = songName.replace("(Official Video HD)", "")
     songName = songName.replace("[Official Video HD]", "")
@@ -47,19 +51,19 @@ def convert_song_name(songName):
     songName = songName.replace("(Video Official)", "")
     songName = songName.replace("[Video Official]", "")
     songName = songName.replace("(VIDEO OFFICIAL)", "")
-      
+
     songName = songName.replace("(Oficial Video)", "")
     songName = songName.replace("[Oficial Video]", "")
     songName = songName.replace("(OFICIAL VIDEO)", "")
     songName = songName.replace("(Video Oficial)", "")
     songName = songName.replace("[Video Oficial]", "")
     songName = songName.replace("(VIDEO OFICIAL)", "")
-  
+
     songName = songName.replace("Video Oficial", "")
     songName = songName.replace("Video Official", "")
     songName = songName.replace("Oficial Video", "")
     songName = songName.replace("Official Video", "")
-    
+
     songName = songName.replace("(Oficjalne Video)", "")
     songName = songName.replace("Oficjalne Video", "")
     songName = songName.replace("(oficjalne video)", "")
@@ -74,7 +78,7 @@ def convert_song_name(songName):
     songName = songName.replace("(radio edit)", "")
     songName = songName.replace("[Radio Edit]", "")
     songName = songName.replace("[radio edit]", "")
-   
+
     songName = songName.replace("(Radio Mix)", "")
     songName = songName.replace("(radio mix)", "")
     songName = songName.replace("[Radio Mix]", "")
@@ -85,9 +89,9 @@ def convert_song_name(songName):
     songName = songName.replace("(Official Audio)", "")
     songName = songName.replace("[Official Audio]", "")
 
-    songName = songName.replace("   ", " ")   
-    songName = songName.replace("  ", " ")   
-    songName = songName.replace("  ", " ")   
+    songName = songName.replace("   ", " ")
+    songName = songName.replace("  ", " ")
+    songName = songName.replace("  ", " ")
     songName = songName.replace(" _", "")
 
     return songName
@@ -101,13 +105,13 @@ def rename_song_name(songName):
     songName = songName.replace("  .xyz", ".xyz")
     songName = songName.replace(" .xyz", ".xyz")
     songName = songName.replace(".xyz", "")
-    
+
     return songName
 
 def rename_song_file(path, fileName):
 
-    originalFileName = fileName 
-    
+    originalFileName = fileName
+
     fileName = convert_song_name(fileName)
 
     fileName = fileName.replace("  .mp3", ".mp3")
@@ -142,7 +146,7 @@ def convert_songname_on_metadata(songName):
           if i > 1:
             name+="-"
           name+=slots[i]
-        i=i+1  
+        i=i+1
       metadata['title'] = name
 
     return metadata
@@ -154,7 +158,7 @@ def add_metadata_song(MUSIC_PATH, albumName, artist, songName):
     mp3ext=".mp3"
     fileName="%s%s"%(songName,mp3ext)
 
-    # looking for file      
+    # looking for file
     if not os.path.isfile(os.path.join(path, fileName)):
         songName = songName.replace("/", "_")
         songName = songName.replace("|", "_")
@@ -170,7 +174,7 @@ def add_metadata_song(MUSIC_PATH, albumName, artist, songName):
         warningInfo="WARNING: %s not exist"%(fileName)
         print (bcolors.WARNING + warningInfo + bcolors.ENDC)
         return
-    
+
     # if filename contain artist add it to metadata
     if not " - " in songName and len(artist)>1:
         originalFileNameWithPath = os.path.join(path, fileName)
@@ -187,7 +191,7 @@ def add_metadata_song(MUSIC_PATH, albumName, artist, songName):
     metadataSongName = convert_songname_on_metadata(newSongName)
     newFileNameWithPath = os.path.join(path, newFileName)
 
-    # saving metadata    
+    # saving metadata
     metatag = EasyID3(newFileNameWithPath)
     if albumName is not None:
         metatag['album'] = albumName
@@ -211,7 +215,6 @@ def add_metadata_playlist(PLAYLISTS_PATH, trackNumber, playlistName, artist, son
     mp3ext=".mp3"
     fileName="%s%s"%(songName,mp3ext)
 
-      
     if not os.path.isfile(os.path.join(path, fileName)):
         songName = songName.replace("/", "_")
         songName = songName.replace("|", "_")
@@ -243,7 +246,7 @@ def add_metadata_playlist(PLAYLISTS_PATH, trackNumber, playlistName, artist, son
 
     metadataSongName = convert_songname_on_metadata(newSongName)
     newFileNameWithPath = os.path.join(path, newFileName)
-        
+
     metatag = EasyID3(newFileNameWithPath)
     metatag['album'] = albumName
     if artist is not None:
@@ -271,7 +274,7 @@ def update_metadata_youtube(PLAYLISTS_PATH, playlistName):
 
         newFileName = rename_song_file(path, originalFileName)
         newSongName = newFileName.replace(".mp3", "")
-        
+
         metadataSongName = convert_songname_on_metadata(newSongName)
         newFileNameWithPath = os.path.join(path, newFileName)
         if not os.path.isfile(newFileNameWithPath):
@@ -286,7 +289,7 @@ def update_metadata_youtube(PLAYLISTS_PATH, playlistName):
         metatag.save()
         print(bcolors.OKGREEN + "[ID3] Added metadata" + bcolors.ENDC)
         showMP3Info(newFileNameWithPath)
-      return newFilesList  
+      return newFilesList
 
 def update_metadata(catalog, albumName):
       newFilesList = []
@@ -298,7 +301,7 @@ def update_metadata(catalog, albumName):
 
         newFileName = rename_song_file(catalog, originalFileName)
         newSongName = newFileName.replace(".mp3", "")
-        
+
         metadataSongName = convert_songname_on_metadata(newSongName)
         newFileNameWithPath = os.path.join(catalog, newFileName)
         if not os.path.isfile(newFileNameWithPath):
@@ -314,7 +317,7 @@ def update_metadata(catalog, albumName):
         newFilesList.append(newFileNameWithPath)
         print(bcolors.OKGREEN + "[ID3] Added metadata" + bcolors.ENDC)
         showMP3Info(newFileNameWithPath)
-      return newFilesList  
+      return newFilesList
 
 
 def setAlbum(catalog, albumName):
