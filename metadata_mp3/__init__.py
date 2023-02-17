@@ -23,72 +23,44 @@ def showMP3Info(fileNameWithPath):
 
 
 def convert_song_name(songName):
+
+    unsupportedName = ["Oficial Video HD",
+                       "Official Video",
+                       "official video",
+                       "Oficial video",
+                       "Oficial Video",
+                       "oficial video",
+                       "OFFICIAL VIDEO",
+                       "Video Official",
+                       "VIDEO OFFICIAL",
+                       "Oficjalne Video",
+                       "Oficjalne video",
+                       "oficjalne video",
+                       "Oficjalne Wideo",
+                       "Oficjalne Wideo",
+                       "oficjalne Wideo",
+                       "Official Video HD",
+                       "Official Video HQ",
+                       "Official Music Video",
+                       "Official Lyric Video",
+                       "Radio Edit",
+                       "Radio edit"
+                       "radio edit",
+                       "Radio Mix",
+                       "radio mix",
+                       "Radio mix",
+                       "Official Audio",
+                       "Official audio",
+                       "official audio",
+                       "Lyrics",
+                        "()","( )","(  )","[]", "[ ]", "[  ]","｜", "⧸" ]
+
+    for x in unsupportedName:
+        songName = songName.replace(x,"")
+
     songName = songName.replace(" -", " - ")
+
     songName = songName.replace("- ", " - ")
-
-    songName = songName.replace("｜", "")
-    songName = songName.replace("⧸", "")
-    songName = songName.replace("Lyrics", "")
-
-    songName = songName.replace("(Oficial Video HD)", "")
-    songName = songName.replace("(Official Video HD)", "")
-    songName = songName.replace("[Official Video HD]", "")
-    songName = songName.replace("(Official Video HQ)", "")
-    songName = songName.replace("[Official Video HQ]", "")
-
-    songName = songName.replace("[Official Music Video]", "")
-    songName = songName.replace("(Official Music Video)", "")
-
-    songName = songName.replace("(Official Lyric Video)", "")
-
-    songName = songName.replace("( Official Video )", "")
-    songName = songName.replace("(Official Video)", "")
-    songName = songName.replace("[Official Video]", "")
-    songName = songName.replace("(official video)", "")
-    songName = songName.replace("(Official video)", "")
-    songName = songName.replace("[OFFICIAL VIDEO]", "")
-    songName = songName.replace("(OFFICIAL VIDEO)", "")
-    songName = songName.replace("(Video Official)", "")
-    songName = songName.replace("[Video Official]", "")
-    songName = songName.replace("(VIDEO OFFICIAL)", "")
-
-    songName = songName.replace("(Oficial Video)", "")
-    songName = songName.replace("[Oficial Video]", "")
-    songName = songName.replace("(OFICIAL VIDEO)", "")
-    songName = songName.replace("(Video Oficial)", "")
-    songName = songName.replace("[Video Oficial]", "")
-    songName = songName.replace("(VIDEO OFICIAL)", "")
-
-    songName = songName.replace("Video Oficial", "")
-    songName = songName.replace("Video Official", "")
-    songName = songName.replace("Oficial Video", "")
-    songName = songName.replace("Official Video", "")
-
-    songName = songName.replace("(Oficjalne Video)", "")
-    songName = songName.replace("Oficjalne Video", "")
-    songName = songName.replace("(oficjalne video)", "")
-    songName = songName.replace("oficjalne video", "")
-
-    songName = songName.replace("(Oficjalne Wideo)", "")
-    songName = songName.replace("Oficjalne Wideo", "")
-    songName = songName.replace("(oficjalne wideo)", "")
-    songName = songName.replace("oficjalne wideo", "")
-
-    songName = songName.replace("(Radio Edit)", "")
-    songName = songName.replace("(radio edit)", "")
-    songName = songName.replace("[Radio Edit]", "")
-    songName = songName.replace("[radio edit]", "")
-
-    songName = songName.replace("(Radio Mix)", "")
-    songName = songName.replace("(radio mix)", "")
-    songName = songName.replace("[Radio Mix]", "")
-    songName = songName.replace("[radio mix]", "")
-
-    songName = songName.replace("(Audio)", "")
-
-    songName = songName.replace("(Official Audio)", "")
-    songName = songName.replace("[Official Audio]", "")
-
     songName = songName.replace("   ", " ")
     songName = songName.replace("  ", " ")
     songName = songName.replace("  ", " ")
@@ -158,34 +130,27 @@ def add_metadata_song(MUSIC_PATH, albumName, artist, songName):
     mp3ext=".mp3"
     fileName="%s%s"%(songName,mp3ext)
 
-    # looking for file
-    if not os.path.isfile(os.path.join(path, fileName)):
-        songName = songName.replace("/", "_")
-        songName = songName.replace("|", "_")
-        songName = songName.replace("\"", "'")
-        songName = songName.replace(":", "-")
-        fileName="%s%s"%(songName,mp3ext)
     if not os.path.isfile(os.path.join(path, fileName)):
         songName = rename_song_name(songName)
         fileName="%s%s"%(songName,mp3ext)
-    if not os.path.isfile(os.path.join(path, fileName)):
-        fileName="%s - %s%s"%(artist, songName, mp3ext)
-    if not os.path.isfile(os.path.join(path, fileName)):
-        warningInfo="WARNING: %s not exist"%(fileName)
-        print (bcolors.WARNING + warningInfo + bcolors.ENDC)
-        return
+        if not os.path.isfile(os.path.join(path, fileName)):
+            fileName="%s - %s%s"%(artist, songName, mp3ext)
+        if not os.path.isfile(os.path.join(path, fileName)):
+            warningInfo="WARNING: %s not exist"%(fileName)
+            print (bcolors.WARNING + warningInfo + bcolors.ENDC)
+            return
 
     # if filename contain artist add it to metadata
     if not " - " in songName and len(artist)>1:
         originalFileNameWithPath = os.path.join(path, fileName)
-        newFileName = "%s - %s.mp3"%(artist, songName)
+        newFileName = "%s - %s.%s"%(artist, songName, mp3ext)
         newFileNameWithPath = os.path.join(path, newFileName)
         os.rename(originalFileNameWithPath, newFileNameWithPath)
         fileName=newFileName
 
     #rename song file to remove useless text
     newFileName = rename_song_file(path, fileName)
-    newSongName = newFileName.replace(".mp3", "")
+    newSongName = newFileName.replace(mp3ext, "")
 
     # get metadata from filename
     metadataSongName = convert_songname_on_metadata(newSongName)
@@ -216,33 +181,27 @@ def add_metadata_playlist(PLAYLISTS_PATH, trackNumber, playlistName, artist, son
     fileName="%s%s"%(songName,mp3ext)
 
     if not os.path.isfile(os.path.join(path, fileName)):
-        songName = songName.replace("/", "_")
-        songName = songName.replace("|", "_")
-        songName = songName.replace("\"", "'")
-        songName = songName.replace(":", "-")
-        fileName="%s%s"%(songName,mp3ext)
-    if not os.path.isfile(os.path.join(path, fileName)):
         songName = songName.replace("-", " - ")
         fileName="%s%s"%(songName,mp3ext)
-    if not os.path.isfile(os.path.join(path, fileName)):
-        songName = rename_song_name(songName)
-        fileName="%s%s"%(songName,mp3ext)
-    if not os.path.isfile(os.path.join(path, fileName)):
-        fileName="%s - %s%s"%(artist, songName, mp3ext)
-    if not os.path.isfile(os.path.join(path, fileName)):
-        warningInfo="WARNING: %s not exist"%(fileName)
-        print (bcolors.WARNING + warningInfo + bcolors.ENDC)
-        return
+        if not os.path.isfile(os.path.join(path, fileName)):
+            songName = rename_song_name(songName)
+            fileName="%s%s"%(songName,mp3ext)
+        if not os.path.isfile(os.path.join(path, fileName)):
+            fileName="%s - %s%s"%(artist, songName, mp3ext)
+        if not os.path.isfile(os.path.join(path, fileName)):
+            warningInfo="WARNING: %s not exist"%(fileName)
+            print (bcolors.WARNING + warningInfo + bcolors.ENDC)
+            return
 
     if not " - " in songName and len(artist)>1:
         originalFileNameWithPath = os.path.join(path, fileName)
-        newFileName = "%s - %s.mp3"%(artist, songName)
+        newFileName = "%s - %s.%s"%(artist, songName, mp3ext)
         newFileNameWithPath = os.path.join(path, newFileName)
         os.rename(originalFileNameWithPath, newFileNameWithPath)
         fileName=newFileName
 
     newFileName = rename_song_file(path, fileName)
-    newSongName = newFileName.replace(".mp3", "")
+    newSongName = newFileName.replace(mp3ext, "")
 
     metadataSongName = convert_songname_on_metadata(newSongName)
     newFileNameWithPath = os.path.join(path, newFileName)

@@ -15,7 +15,7 @@ import metadata_mp3
 class TestRenameSongName(TestCase):
     def test_1(self):
         songNameBefore = "Counting Crows - Colorblind (Official Video)"
-        songNameAfter = "Counting Crows - Colorblind"        
+        songNameAfter = "Counting Crows - Colorblind"
         songNameAfterTest = metadata_mp3.rename_song_name(songNameBefore)
         self.assertEqual(songNameAfter, songNameAfterTest)
 
@@ -115,7 +115,7 @@ class TestAddMetadataPlaylist(TestCase):
             os.mkdir(albumDirectory)
         testFileNameWithPath = os.path.join(currentDirectory,albumTest, testFileName)
         shutil.copy(originalTestFileNameWithPath, testFileNameWithPath)
-        
+
         newFileNameWithPath = metadata_mp3.add_metadata_playlist(currentDirectory,trackNumberTest,albumTest,artistTest,songNameTest)
         #print(newFileNameWithPath)
         self.assertTrue(os.path.isfile(newFileNameWithPath))
@@ -159,7 +159,7 @@ class TestUpdateMetadataYoutube(TestCase):
         shutil.copy(originalTestFileNameWithPath, testFileNameWithPath)
         testFileNameWithPath = os.path.join(currentDirectory,albumTest, testFileName3)
         shutil.copy(originalTestFileNameWithPath, testFileNameWithPath)
-     
+
         newFilesList = metadata_mp3.update_metadata_youtube(currentDirectory,albumTest)
         i = 0
         for newFile in newFilesList:
@@ -172,7 +172,7 @@ class TestUpdateMetadataYoutube(TestCase):
             self.assertEqual(metatag['album'][0], "YT "+albumTest)
 
             i = i+1
-    
+
         shutil.rmtree(os.path.join(currentDirectory,albumTest))
 
 class TestUpdateMetadata(TestCase):
@@ -204,7 +204,7 @@ class TestUpdateMetadata(TestCase):
         shutil.copy(originalTestFileNameWithPath, testFileNameWithPath)
         testFileNameWithPath = os.path.join(currentDirectory,albumTest, testFileName3)
         shutil.copy(originalTestFileNameWithPath, testFileNameWithPath)
-     
+
         newFilesList = metadata_mp3.update_metadata(albumDirectory,albumTest)
         i = 0
         for newFile in newFilesList:
@@ -217,7 +217,7 @@ class TestUpdateMetadata(TestCase):
             self.assertEqual(metatag['album'][0], albumTest)
 
             i = i+1
-    
+
         shutil.rmtree(os.path.join(currentDirectory,albumTest))
 
 
@@ -248,9 +248,9 @@ class TestSetAlbum(TestCase):
             metatag = EasyID3(newFileWithPath)
             self.assertEqual(metatag['album'][0], "album test")
 
-    
+
         shutil.rmtree(os.path.join(currentDirectory,testCatalog))
-       
+
 class TestSetArtist(TestCase):
     def test_1(self):
         originalTestFileName = "test.mp3"
@@ -276,9 +276,9 @@ class TestSetArtist(TestCase):
             self.assertTrue(os.path.isfile(newFileWithPath))
             metatag = EasyID3(newFileWithPath)
             self.assertEqual(metatag['artist'][0], "artist test")
-    
+
         shutil.rmtree(os.path.join(currentDirectory,testCatalog))
- 
+
 
 if __name__=='__main__':
     unittest.main()
