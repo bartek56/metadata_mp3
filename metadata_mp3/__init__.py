@@ -31,7 +31,6 @@ class MetadataManager:
         audio = MP3(fileNameWithPath, ID3=EasyID3)
         print (audio.pprint())
 
-
     def remove_sheet_from_songName(self, songName):
 
         unsupportedName = ["Oficial Video HD",
@@ -124,11 +123,6 @@ class MetadataManager:
         return metadata
 
     def lookingForFileAccordWithYTFilename(self, path, songName, artist):
-
-        songName = songName.replace("-", " - ")
-        fileName="%s%s"%(songName,self.mp3ext)
-        if os.path.isfile(os.path.join(path, fileName)):
-            return songName
 
         songName = self.remove_sheet_from_songName(songName)
         fileName="%s%s"%(songName,self.mp3ext)
@@ -296,7 +290,7 @@ class MetadataManager:
         for x in range(len(filesList)):
             originalFileName = filesList[x]
 
-            newFileName = self. remove_sheet_from_filename(catalog, originalFileName)
+            newFileName = self.remove_sheet_from_filename(catalog, originalFileName)
             newSongName = newFileName.replace(self.mp3ext, "")
 
             metadataSongName = self.convert_songname_on_metadata(newSongName)
@@ -315,7 +309,6 @@ class MetadataManager:
             print(bcolors.OKGREEN + "[ID3] Added metadata" + bcolors.ENDC)
             self.showMP3Info(newFileNameWithPath)
         return newFilesList
-
 
     def setAlbum(self, catalog, albumName):
         filesList = [f for f in os.listdir(catalog) if f.endswith(self.mp3ext)]
