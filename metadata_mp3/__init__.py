@@ -119,53 +119,91 @@ class MetadataManager:
         return metadata
 
     #youtubedl
-    def add_metadata_song(self, MUSIC_PATH, albumName, artist, songName):
+    def rename_and_add_metadata_to_song(self, MUSIC_PATH, albumName, artist, songName):
         path=MUSIC_PATH
 
         mp3ext=".mp3"
         fileName="%s%s"%(songName,mp3ext)
 
         if not os.path.isfile(os.path.join(path, fileName)):
-            songName = self.remove_sheet_from_songName(songName)
-            fileName="%s%s"%(songName,mp3ext)
-            if not os.path.isfile(os.path.join(path, fileName)):
-                fileName="%s - %s%s"%(artist, songName, mp3ext)
-            if not os.path.isfile(os.path.join(path, fileName)):
-                warningInfo="WARNING: %s not exist"%(fileName)
-                print (bcolors.WARNING + warningInfo + bcolors.ENDC)
-                return
+            warningInfo="WARNING: %s not exist"%(fileName)
+            print (bcolors.WARNING + warningInfo + bcolors.ENDC)
+            return
 
-        # if filename contain artist add it to metadata
+        #rename song file to remove useless text
+        fileName = self.remove_sheet_from_filename(path, fileName)
+        songName = fileName.replace(mp3ext, "")
+
+        # if songName doesn't contain artist and artist is known
+        # rename filename
         if not " - " in songName and len(artist)>1:
             originalFileNameWithPath = os.path.join(path, fileName)
             newFileName = "%s - %s%s"%(artist, songName, mp3ext)
             newFileNameWithPath = os.path.join(path, newFileName)
             os.rename(originalFileNameWithPath, newFileNameWithPath)
             fileName=newFileName
-
-        #rename song file to remove useless text
-        newFileName = self.remove_sheet_from_filename(path, fileName)
-        newSongName = newFileName.replace(mp3ext, "")
-
-        # get metadata from filename
-        metadataSongName = self.convert_songname_on_metadata(newSongName)
-        newFileNameWithPath = os.path.join(path, newFileName)
+            title = songName
+        # artist is known from file and from input
+        elif " - " in songName and len(artist)>1:
+            metadataSongName = self.convert_songname_on_metadata(songName)
+            title = metadataSongName['title']
+            newFileName = "%s - %s%s"%(artist, title, mp3ext)
+            newFileNameWithPath = os.path.join(path, newFileName)
+            originalFileNameWithPath = os.path.join(path, fileName)
+            os.rename(originalFileNameWithPath, newFileNameWithPath)
+            fileName=newFileName
+        # get artist from filename, when we do not know artist
+        elif " - " in songName and (artist is None or len(artist)==0):
+            # get metadata from filename
+            metadataSongName = self.convert_songname_on_metadata(songName)
+            newFileNameWithPath = os.path.join(path, newFileName)
+            artist = metadataSongName['artist']
+            title = metadataSongName['title']
+        # artist is unknown
+        elif not " - " in songName and (artist is None or len(artist)==0):
+            warningInfo="WARNING: artist for song %s is not known"%(songName)
+            print (bcolors.WARNING + warningInfo + bcolors.ENDC)
+            title = songName
+            artist = None
+        else:
+            warningInfo="ERROR: Unknown situation with songname"
+            print (bcolors.FAIL + warningInfo + bcolors.ENDC)
+            return
 
         # saving metadata
         metatag = EasyID3(newFileNameWithPath)
         if albumName is not None:
             metatag['album'] = albumName
-        if artist is not None and len(artist)>1:
+        if artist is not None:
             metatag['artist'] = artist
-        else:
-            metatag['artist'] = metadataSongName['artist']
-        metatag['title'] = metadataSongName['title']
+        metatag['title'] = title
         metatag.save()
         print (bcolors.OKGREEN + "[ID3] Added metadata" + bcolors.ENDC)
         print (newFileNameWithPath)
         audio = MP3(newFileNameWithPath, ID3=EasyID3)
         print (audio.pprint())
         return newFileNameWithPath
+
+    def lookingForFileAccordWithYTFilename(self, path, songName, artist):
+        mp3ext=".mp3"
+
+        songName = songName.replace("-", " - ")
+        fileName="%s%s"%(songName,mp3ext)
+        if os.path.isfile(os.path.join(path, fileName)):
+            return songName
+
+        songName = self.remove_sheet_from_songName(songName)
+        fileName="%s%s"%(songName,mp3ext)
+
+        if os.path.isfile(os.path.join(path, fileName)):
+            return songName
+
+        songName = "%s - %s"%(artist, songName)
+        fileName="%s%s"%(songName,mp3ext)
+        if os.path.isfile(os.path.join(path, fileName)):
+            return songName
+        else:
+            return None
 
     # youtubedl
     def add_metadata_playlist(self, PLAYLISTS_PATH, trackNumber, playlistName, artist, songName):
