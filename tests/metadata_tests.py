@@ -92,7 +92,7 @@ class TestAddMetadataSong(TestCase):
     def setUp(self):
         self.metadata_mp3 = metadata_mp3.MetadataManager()
 
-    def renameTestFile(self, testFileName):
+    def renameFile(self, testFileName):
         originalTestFileName = "test.mp3"
 
         self.currentDirectory = os.path.dirname(os.path.realpath(__file__))
@@ -101,72 +101,9 @@ class TestAddMetadataSong(TestCase):
         shutil.copy(originalTestFileNameWithPath, testFileNameWithPath)
         return testFileNameWithPath
 
-    def test_1(self):
-        testFileName = "Counting Crows - Colorblind.mp3"
-        testFileNameWithPath = self.renameTestFile(testFileName)
-
-        songNameTest = "Counting Crows - Colorblind"
-        artistTest = "Counting Crows"
-        titleTest = "Colorblind"
-        albumTest = "album test"
-
-        newFileNameWithPath = self.metadata_mp3.rename_and_add_metadata_to_song(self.currentDirectory, albumTest, artistTest, songNameTest)
-        metatag = EasyID3(newFileNameWithPath)
-        self.assertTrue(os.path.isfile(newFileNameWithPath))
-        self.assertEqual(newFileNameWithPath, testFileNameWithPath)
-
-
-        self.assertEqual(metatag['artist'][0], artistTest)
-        self.assertEqual(metatag['title'][0], titleTest)
-        self.assertEqual(metatag['album'][0], albumTest)
-        os.remove(newFileNameWithPath)
-
-    def test_2(self):
-        fileNameTest = "Counting Crows - Colorblind (Official Video).mp3"
-        testFileNameWithPath = self.renameTestFile(fileNameTest)
-
-        songNameTest = "Counting Crows - Colorblind (Official Video)"
-        artistTest = "Counting Crows"
-        titleTest = "Colorblind"
-        albumTest = "album test"
-
-        newFileNameWithPath = self.metadata_mp3.rename_and_add_metadata_to_song(self.currentDirectory, albumTest, artistTest, songNameTest)
-        self.assertFalse(os.path.isfile(testFileNameWithPath))
-        self.assertTrue(os.path.isfile(newFileNameWithPath))
-        self.assertNotEqual(newFileNameWithPath, testFileNameWithPath)
-
-        metatag = EasyID3(newFileNameWithPath)
-
-        self.assertEqual(metatag['artist'][0], artistTest)
-        self.assertEqual(metatag['title'][0], titleTest)
-        self.assertEqual(metatag['album'][0], albumTest)
-        os.remove(newFileNameWithPath)
-
-    @unittest.skip("this test need refactor for updateMetadata, not for add")
-    def test_3(self):
-        testFileName = "Counting Crows - Colorblind.mp3"
-        testFileNameWithPath = self.renameTestFile(testFileName)
-
-        songNameTest = "Colorblind"
-        artistTest = "Counting Crows"
-        titleTest = "Colorblind"
-        albumTest = "album test"
-
-
-        newFileNameWithPath = self.metadata_mp3.rename_and_add_metadata_to_song(self.currentDirectory, albumTest, artistTest, songNameTest)
-        metatag = EasyID3(newFileNameWithPath)
-        self.assertTrue(os.path.isfile(newFileNameWithPath))
-        self.assertEqual(newFileNameWithPath, str(self.currentDirectory+"/"+artistTest+" - " + titleTest+".mp3"))
-
-
-        self.assertEqual(metatag['artist'][0], artistTest)
-        self.assertEqual(metatag['title'][0], titleTest)
-        self.assertEqual(metatag['album'][0], albumTest)
-        os.remove(newFileNameWithPath)
-
-    def test_4(self):
+    def test_artistIsKnownFromInput(self):
         fileNameTest = "Colorblind.mp3"
-        testFileNameWithPath = self.renameTestFile(fileNameTest)
+        testFileNameWithPath = self.renameFile(fileNameTest)
         songNameBefore = "Colorblind"
 
         filenameAfter = "Counting Crows - Colorblind.mp3"
@@ -188,41 +125,282 @@ class TestAddMetadataSong(TestCase):
         self.assertEqual(metatag['album'][0], albumTest)
         os.remove(newFileNameWithPath)
 
-class TestAddMetadataPlaylist(TestCase):
-    def setUp(self):
-        self.metadata_mp3 = metadata_mp3.MetadataManager()
+    def test_artistIsKnownFromFileAndFromInput(self):
+        fileNameTest = "Counting Crows - Colorblind.mp3"
+        testFileNameWithPath = self.renameFile(fileNameTest)
 
-    def test_1(self):
-        originalTestFileName = "test.mp3"
-        testFileName = "Counting Crows - Colorblind.mp3"
-        songNameTest = "Counting Crows - Colorblind"
+        filenameAfter = fileNameTest
         artistTest = "Counting Crows"
         titleTest = "Colorblind"
-        albumTest = "spokojne-sad"
-        trackNumberTest = 1
+        albumTest = "album test"
 
-        currentDirectory = os.path.dirname(os.path.realpath(__file__))
-        originalTestFileNameWithPath = os.path.join(currentDirectory,originalTestFileName)
-        albumDirectory = os.path.join(currentDirectory,albumTest)
+        songNameBefore = fileNameTest.replace(".mp3","")
+        newFileNameWithPath = self.metadata_mp3.rename_and_add_metadata_to_song(self.currentDirectory, albumTest, artistTest, songNameBefore)
 
-
-        if not os.path.exists(albumDirectory):
-            os.mkdir(albumDirectory)
-        testFileNameWithPath = os.path.join(currentDirectory,albumTest, testFileName)
-        shutil.copy(originalTestFileNameWithPath, testFileNameWithPath)
-
-        newFileNameWithPath = self.metadata_mp3.add_metadata_playlist(currentDirectory, trackNumberTest, albumTest, artistTest, songNameTest)
-        self.assertTrue(os.path.isfile(newFileNameWithPath))
         self.assertEqual(newFileNameWithPath, testFileNameWithPath)
+        self.assertTrue(os.path.isfile(newFileNameWithPath))
+        self.assertTrue(os.path.isfile(testFileNameWithPath))
+
+        self.assertEqual(newFileNameWithPath, str(self.currentDirectory+"/"+filenameAfter))
+
+        metatag = EasyID3(newFileNameWithPath)
+        self.assertIn('title', metatag)
+        self.assertIn('artist', metatag)
+        self.assertIn('album', metatag)
+
+        self.assertEqual(metatag['artist'][0], artistTest)
+        self.assertEqual(metatag['title'][0], titleTest)
+        self.assertEqual(metatag['album'][0], albumTest)
+        os.remove(newFileNameWithPath)
+
+    def test_artistIsKnownFromFileAndFromInput_removeSheed(self):
+        fileNameTest = "Counting Crows - Colorblind (Official Video).mp3"
+        testFileNameWithPath = self.renameFile(fileNameTest)
+
+        songNameTest = "Counting Crows - Colorblind (Official Video)"
+        artistTest = "Counting Crows"
+        titleTest = "Colorblind"
+        albumTest = "album test"
+
+        newFileNameWithPath = self.metadata_mp3.rename_and_add_metadata_to_song(self.currentDirectory, albumTest, artistTest, songNameTest)
+        self.assertFalse(os.path.isfile(testFileNameWithPath))
+        self.assertTrue(os.path.isfile(newFileNameWithPath))
+        self.assertNotEqual(newFileNameWithPath, testFileNameWithPath)
 
         metatag = EasyID3(newFileNameWithPath)
 
         self.assertEqual(metatag['artist'][0], artistTest)
         self.assertEqual(metatag['title'][0], titleTest)
-        self.assertEqual(metatag['album'][0], "YT "+albumTest)
-        self.assertEqual(metatag['tracknumber'][0],str(trackNumberTest))
+        self.assertEqual(metatag['album'][0], albumTest)
+        os.remove(newFileNameWithPath)
 
-        shutil.rmtree(os.path.join(currentDirectory,albumTest))
+    @unittest.skip("this test need refactor for updateMetadata, not for add")
+    def test_3(self):
+        testFileName = "Counting Crows - Colorblind.mp3"
+        testFileNameWithPath = self.renameFile(testFileName)
+
+        songNameTest = "Colorblind"
+        artistTest = "Counting Crows"
+        titleTest = "Colorblind"
+        albumTest = "album test"
+
+
+        newFileNameWithPath = self.metadata_mp3.rename_and_add_metadata_to_song(self.currentDirectory, albumTest, artistTest, songNameTest)
+        metatag = EasyID3(newFileNameWithPath)
+        self.assertTrue(os.path.isfile(newFileNameWithPath))
+        self.assertEqual(newFileNameWithPath, str(self.currentDirectory+"/"+artistTest+" - " + titleTest+".mp3"))
+
+
+        self.assertEqual(metatag['artist'][0], artistTest)
+        self.assertEqual(metatag['title'][0], titleTest)
+        self.assertEqual(metatag['album'][0], albumTest)
+        os.remove(newFileNameWithPath)
+
+    def test_artistIsKnownFromFile(self):
+        fileNameTest = "Counting Crows - Colorblind.mp3"
+        testFileNameWithPath = self.renameFile(fileNameTest)
+
+        artistTest = ""
+        titleTest = "Colorblind"
+        albumTest = "album test"
+
+        filenameAfter = fileNameTest
+
+        songNameBefore = fileNameTest.replace(".mp3","")
+        newFileNameWithPath = self.metadata_mp3.rename_and_add_metadata_to_song(self.currentDirectory, albumTest, artistTest, songNameBefore)
+
+        self.assertEqual(newFileNameWithPath, testFileNameWithPath)
+        self.assertTrue(os.path.isfile(newFileNameWithPath))
+        self.assertEqual(newFileNameWithPath, str(self.currentDirectory+"/"+filenameAfter))
+
+        metatag = EasyID3(newFileNameWithPath)
+        self.assertIn('title', metatag)
+        self.assertIn('artist', metatag)
+        self.assertIn('album', metatag)
+
+        self.assertEqual(metatag['title'][0], titleTest)
+        self.assertEqual(metatag['artist'][0], "Counting Crows")
+        self.assertEqual(metatag['album'][0], albumTest)
+        os.remove(newFileNameWithPath)
+
+    def test_artistIsNotKnown(self):
+        fileNameTest = "Colorblind.mp3"
+        testFileNameWithPath = self.renameFile(fileNameTest)
+
+        artistTest = ""
+        titleTest = "Colorblind"
+        albumTest = "album test"
+
+        filenameAfter = "Colorblind.mp3"
+
+        songNameBefore = fileNameTest.replace(".mp3","")
+        newFileNameWithPath = self.metadata_mp3.rename_and_add_metadata_to_song(self.currentDirectory, albumTest, artistTest, songNameBefore)
+
+        self.assertEqual(newFileNameWithPath, testFileNameWithPath)
+        self.assertTrue(os.path.isfile(newFileNameWithPath))
+        self.assertEqual(newFileNameWithPath, str(self.currentDirectory+"/"+filenameAfter))
+
+        metatag = EasyID3(newFileNameWithPath)
+        self.assertIn('title', metatag)
+        self.assertNotIn('artist', metatag)
+        self.assertIn('album', metatag)
+
+        self.assertEqual(metatag['title'][0], titleTest)
+        self.assertEqual(metatag['album'][0], albumTest)
+        os.remove(newFileNameWithPath)
+
+class TestAddMetadataPlaylist(TestCase):
+    def setUp(self):
+        self.metadata_mp3 = metadata_mp3.MetadataManager()
+
+    def renameFile(self, testFileName, albumTest):
+        originalTestFileName = "test.mp3"
+
+        self.currentDirectory = os.path.dirname(os.path.realpath(__file__))
+        originalTestFileNameWithPath = os.path.join(self.currentDirectory, originalTestFileName)
+        albumDirectory = os.path.join(self.currentDirectory, albumTest)
+
+        if not os.path.exists(albumDirectory):
+            os.mkdir(albumDirectory)
+
+        testFileNameWithPath = os.path.join(self. currentDirectory, albumTest, testFileName)
+        shutil.copy(originalTestFileNameWithPath, testFileNameWithPath)
+
+        return testFileNameWithPath
+
+    def test_artistIsKnownFromInput(self):
+        fileNameTest = "Colorblind.mp3"
+        playlistName_album = "spokojne-sad"
+        artist = "Counting Crows"
+        trackNumber = 1
+
+        titleTest = "Colorblind"
+        filenameAfter = "Counting Crows - Colorblind.mp3"
+
+        testFileNameWithPath = self.renameFile(fileNameTest, playlistName_album)
+        songNameBefore = fileNameTest.replace(".mp3","")
+
+        newFileNameWithPath = self.metadata_mp3.rename_and_add_metadata_to_playlist(self.currentDirectory, trackNumber, playlistName_album, artist, songNameBefore)
+
+        self.assertNotEqual(newFileNameWithPath, testFileNameWithPath)
+        self.assertTrue(os.path.isfile(newFileNameWithPath))
+        self.assertFalse(os.path.isfile(testFileNameWithPath))
+
+        self.assertEqual(newFileNameWithPath, str(self.currentDirectory+"/"+playlistName_album + "/" +filenameAfter))
+
+        metatag = EasyID3(newFileNameWithPath)
+        self.assertIn('title', metatag)
+        self.assertIn('artist', metatag)
+        self.assertIn('album', metatag)
+        self.assertIn('tracknumber', metatag)
+
+
+        self.assertEqual(metatag['title'][0], titleTest)
+        self.assertEqual(metatag['artist'][0], artist)
+        self.assertEqual(metatag['album'][0], "YT "+playlistName_album)
+        self.assertEqual(metatag['tracknumber'][0], str(trackNumber))
+
+        shutil.rmtree(os.path.join(self.currentDirectory,playlistName_album))
+
+    def test_artistIsKnownFromFileAndFromInput(self):
+        fileNameTest = "Counting Crows - Colorblind.mp3"
+        playlistName_album = "spokojne-sad"
+        artist = "Counting Crows"
+        trackNumber = 1
+
+        titleTest = "Colorblind"
+        filenameAfter = fileNameTest
+
+        testFileNameWithPath = self.renameFile(fileNameTest, playlistName_album)
+        songNameBefore = fileNameTest.replace(".mp3","")
+
+        newFileNameWithPath = self.metadata_mp3.rename_and_add_metadata_to_playlist(self.currentDirectory, trackNumber, playlistName_album, artist, songNameBefore)
+
+        self.assertEqual(newFileNameWithPath, testFileNameWithPath)
+        self.assertTrue(os.path.isfile(newFileNameWithPath))
+        self.assertTrue(os.path.isfile(testFileNameWithPath))
+
+        self.assertEqual(newFileNameWithPath, str(self.currentDirectory+"/"+playlistName_album + "/" +filenameAfter))
+
+        metatag = EasyID3(newFileNameWithPath)
+        self.assertIn('title', metatag)
+        self.assertIn('artist', metatag)
+        self.assertIn('album', metatag)
+        self.assertIn('tracknumber', metatag)
+
+
+        self.assertEqual(metatag['title'][0], titleTest)
+        self.assertEqual(metatag['artist'][0], artist)
+        self.assertEqual(metatag['album'][0], "YT "+playlistName_album)
+        self.assertEqual(metatag['tracknumber'][0], str(trackNumber))
+
+        shutil.rmtree(os.path.join(self.currentDirectory,playlistName_album))
+
+    def test_artistIsKnownFromFile(self):
+        fileNameTest = "Counting Crows - Colorblind.mp3"
+        playlistName_album = "spokojne-sad"
+        artist = ""
+        trackNumber = 1
+
+        titleTest = "Colorblind"
+        filenameAfter = fileNameTest
+
+        testFileNameWithPath = self.renameFile(fileNameTest, playlistName_album)
+        songNameBefore = fileNameTest.replace(".mp3","")
+
+        newFileNameWithPath = self.metadata_mp3.rename_and_add_metadata_to_playlist(self.currentDirectory, trackNumber, playlistName_album, artist, songNameBefore)
+
+        self.assertEqual(newFileNameWithPath, testFileNameWithPath)
+        self.assertTrue(os.path.isfile(newFileNameWithPath))
+        self.assertTrue(os.path.isfile(testFileNameWithPath))
+
+        self.assertEqual(newFileNameWithPath, str(self.currentDirectory+"/"+playlistName_album + "/" +filenameAfter))
+
+        metatag = EasyID3(newFileNameWithPath)
+        self.assertIn('title', metatag)
+        self.assertIn('artist', metatag)
+        self.assertIn('album', metatag)
+        self.assertIn('tracknumber', metatag)
+
+        self.assertEqual(metatag['title'][0], titleTest)
+        self.assertEqual(metatag['artist'][0], "Counting Crows")
+        self.assertEqual(metatag['album'][0], "YT "+playlistName_album)
+        self.assertEqual(metatag['tracknumber'][0], str(trackNumber))
+
+        shutil.rmtree(os.path.join(self.currentDirectory,playlistName_album))
+
+    def test_artistIsNotKnown(self):
+        fileNameTest = "Colorblind.mp3"
+        playlistName_album = "spokojne-sad"
+        artist = ""
+        trackNumber = 1
+
+        titleTest = "Colorblind"
+        filenameAfter = fileNameTest
+
+        testFileNameWithPath = self.renameFile(fileNameTest, playlistName_album)
+        songNameBefore = fileNameTest.replace(".mp3","")
+
+        newFileNameWithPath = self.metadata_mp3.rename_and_add_metadata_to_playlist(self.currentDirectory, trackNumber, playlistName_album, artist, songNameBefore)
+
+        self.assertEqual(newFileNameWithPath, testFileNameWithPath)
+        self.assertTrue(os.path.isfile(newFileNameWithPath))
+        self.assertTrue(os.path.isfile(testFileNameWithPath))
+
+        self.assertEqual(newFileNameWithPath, str(self.currentDirectory+"/"+playlistName_album + "/" +filenameAfter))
+
+        metatag = EasyID3(newFileNameWithPath)
+        self.assertIn('title', metatag)
+        self.assertNotIn('artist', metatag)
+        self.assertIn('album', metatag)
+        self.assertIn('tracknumber', metatag)
+
+        self.assertEqual(metatag['title'][0], titleTest)
+        self.assertEqual(metatag['album'][0], "YT "+playlistName_album)
+        self.assertEqual(metatag['tracknumber'][0], str(trackNumber))
+
+        shutil.rmtree(os.path.join(self.currentDirectory,playlistName_album))
+
 
 class TestUpdateMetadataYoutube(TestCase):
     def setUp(self):
@@ -320,8 +498,6 @@ class TestUpdateMetadata(TestCase):
             i = i+1
 
         shutil.rmtree(os.path.join(currentDirectory,albumTest))
-
-
 
 class TestSetAlbum(TestCase):
     def setUp(self):
