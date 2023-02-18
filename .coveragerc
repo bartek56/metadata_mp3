@@ -1,0 +1,14 @@
+[html]
+directory = results/coverage
+
+[report]
+exclude_lines =
+    pragma: no cover
+    if __name__ == .__main__.:
+
+[run]
+omit =
+    tests/*
+    */site-packages/*
+    */distutils/*
+    */dist-packages/*

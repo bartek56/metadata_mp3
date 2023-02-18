@@ -22,7 +22,7 @@ def showMP3Info(fileNameWithPath):
     print (audio.pprint())
 
 
-def convert_song_name(songName):
+def remove_sheet_from_songName(songName):
 
     unsupportedName = ["Oficial Video HD",
                        "Official Video",
@@ -66,34 +66,26 @@ def convert_song_name(songName):
     songName = songName.replace("  ", " ")
     songName = songName.replace(" _", "")
 
-    return songName
-
-def rename_song_name(songName):
-    songName = convert_song_name(songName)
-    ext = ".xyz"
-    songName = "%s%s"%(songName,ext)
-
-    songName = songName+".xyz"
-    songName = songName.replace("  .xyz", ".xyz")
-    songName = songName.replace(" .xyz", ".xyz")
-    songName = songName.replace(".xyz", "")
+    # remove spaces on the end of filename
+    if songName[-1] == ' ':
+        songName = songName[:-1]
 
     return songName
 
-def rename_song_file(path, fileName):
+def remove_sheet_from_filename(path, originalFileName):
 
-    originalFileName = fileName
+    ext = ".mp3"
 
-    fileName = convert_song_name(fileName)
+    fileNameWithoutExtension = originalFileName.replace(ext, "")
 
-    fileName = fileName.replace("  .mp3", ".mp3")
-    fileName = fileName.replace(" .mp3", ".mp3")
+    fileNameWithoutExtension = remove_sheet_from_songName(fileNameWithoutExtension)
+    fileNameWithExtension = "%s%s"%(fileNameWithoutExtension, ext)
 
     originalFileNameWithPath=os.path.join(path, originalFileName)
-    fileNameWithPath = os.path.join(path, fileName)
+    fileNameWithPath = os.path.join(path, fileNameWithExtension)
     os.rename(originalFileNameWithPath, fileNameWithPath)
 
-    return fileName
+    return fileNameWithExtension
 
 def convert_songname_on_metadata(songName):
     slots = songName.split(" - ")
@@ -131,7 +123,7 @@ def add_metadata_song(MUSIC_PATH, albumName, artist, songName):
     fileName="%s%s"%(songName,mp3ext)
 
     if not os.path.isfile(os.path.join(path, fileName)):
-        songName = rename_song_name(songName)
+        songName = remove_sheet_from_songName(songName)
         fileName="%s%s"%(songName,mp3ext)
         if not os.path.isfile(os.path.join(path, fileName)):
             fileName="%s - %s%s"%(artist, songName, mp3ext)
@@ -143,13 +135,13 @@ def add_metadata_song(MUSIC_PATH, albumName, artist, songName):
     # if filename contain artist add it to metadata
     if not " - " in songName and len(artist)>1:
         originalFileNameWithPath = os.path.join(path, fileName)
-        newFileName = "%s - %s.%s"%(artist, songName, mp3ext)
+        newFileName = "%s - %s%s"%(artist, songName, mp3ext)
         newFileNameWithPath = os.path.join(path, newFileName)
         os.rename(originalFileNameWithPath, newFileNameWithPath)
         fileName=newFileName
 
     #rename song file to remove useless text
-    newFileName = rename_song_file(path, fileName)
+    newFileName = remove_sheet_from_filename(path, fileName)
     newSongName = newFileName.replace(mp3ext, "")
 
     # get metadata from filename
@@ -184,7 +176,7 @@ def add_metadata_playlist(PLAYLISTS_PATH, trackNumber, playlistName, artist, son
         songName = songName.replace("-", " - ")
         fileName="%s%s"%(songName,mp3ext)
         if not os.path.isfile(os.path.join(path, fileName)):
-            songName = rename_song_name(songName)
+            songName = remove_sheet_from_songName(songName)
             fileName="%s%s"%(songName,mp3ext)
         if not os.path.isfile(os.path.join(path, fileName)):
             fileName="%s - %s%s"%(artist, songName, mp3ext)
@@ -195,12 +187,12 @@ def add_metadata_playlist(PLAYLISTS_PATH, trackNumber, playlistName, artist, son
 
     if not " - " in songName and len(artist)>1:
         originalFileNameWithPath = os.path.join(path, fileName)
-        newFileName = "%s - %s.%s"%(artist, songName, mp3ext)
+        newFileName = "%s - %s%s"%(artist, songName, mp3ext)
         newFileNameWithPath = os.path.join(path, newFileName)
         os.rename(originalFileNameWithPath, newFileNameWithPath)
         fileName=newFileName
 
-    newFileName = rename_song_file(path, fileName)
+    newFileName = remove_sheet_from_filename(path, fileName)
     newSongName = newFileName.replace(mp3ext, "")
 
     metadataSongName = convert_songname_on_metadata(newSongName)
@@ -231,7 +223,7 @@ def update_metadata_youtube(PLAYLISTS_PATH, playlistName):
       for x in range(len(filesList)):
         originalFileName = filesList[x]
 
-        newFileName = rename_song_file(path, originalFileName)
+        newFileName = remove_sheet_from_filename(path, originalFileName)
         newSongName = newFileName.replace(".mp3", "")
 
         metadataSongName = convert_songname_on_metadata(newSongName)
@@ -258,7 +250,7 @@ def update_metadata(catalog, albumName):
       for x in range(len(filesList)):
         originalFileName = filesList[x]
 
-        newFileName = rename_song_file(catalog, originalFileName)
+        newFileName = remove_sheet_from_filename(catalog, originalFileName)
         newSongName = newFileName.replace(".mp3", "")
 
         metadataSongName = convert_songname_on_metadata(newSongName)
