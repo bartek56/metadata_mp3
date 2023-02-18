@@ -16,6 +16,11 @@ class bcolors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
 
+class FileData:
+    def __init__(self, title_:str, artist_:str, newFileName_:str):
+        self.title = title_
+        self.artist = artist_
+        self.newFileName = newFileName_
 
 class MetadataManager:
     def __init__(self):
@@ -138,6 +143,50 @@ class MetadataManager:
         else:
             return None
 
+    def analyzeAndRenameFilename(self, path, fileName, artist):
+        songName = fileName.replace(self.mp3ext, "")
+        originalFileNameWithPath = os.path.join(path, fileName)
+        # any condition has to verify variables: title, artist, newFileName
+        # if songName doesn't contain artist and artist is known
+        # rename filename
+        if not " - " in songName and len(artist)>1:
+            newFileName = "%s - %s%s"%(artist, songName, self.mp3ext)
+            newFileNameWithPath = os.path.join(path, newFileName)
+            os.rename(originalFileNameWithPath, newFileNameWithPath)
+            fileName=newFileName
+            title = songName
+            return FileData(title, artist, newFileName)
+
+        # artist is known from file and from input
+        if " - " in songName and len(artist)>1:
+            metadataSongName = self.convert_songname_on_metadata(songName)
+            title = metadataSongName['title']
+            newFileName = "%s - %s%s"%(artist, title, self.mp3ext)
+            newFileNameWithPath = os.path.join(path, newFileName)
+            os.rename(originalFileNameWithPath, newFileNameWithPath)
+            return FileData(title, artist, newFileName)
+
+        # ----- do not modify filename, because do not have enough information ----
+        # get artist from filename, when we do not know artist
+        if " - " in songName and (artist is None or len(artist)==0):
+            metadataSongName = self.convert_songname_on_metadata(songName)
+            newFileName = "%s%s"%(songName, self.mp3ext)
+            artist = metadataSongName['artist']
+            title = metadataSongName['title']
+            return FileData(title, artist, newFileName)
+
+        # artist is unknown
+        if not " - " in songName and (artist is None or len(artist)==0):
+            warningInfo="WARNING: artist for song %s is not known"%(songName)
+            print (bcolors.WARNING + warningInfo + bcolors.ENDC)
+            newFileName = "%s%s"%(songName, self.mp3ext)
+            title = songName
+            artist = None
+            return FileData(title, artist, newFileName)
+
+        # something wrong
+        return None
+
     #youtubedl
     def rename_and_add_metadata_to_song(self, MUSIC_PATH, albumName, artist, songName):
         path=MUSIC_PATH
@@ -151,46 +200,18 @@ class MetadataManager:
 
         #rename song file to remove useless text
         fileName = self.remove_sheet_from_filename(path, fileName)
-        songName = fileName.replace(self.mp3ext, "")
 
-        originalFileNameWithPath = os.path.join(path, fileName)
-
-        # any condition has to verify variables: title, artist, newFileName
-        # if songName doesn't contain artist and artist is known
-        # rename filename
-        if not " - " in songName and len(artist)>1:
-            newFileName = "%s - %s%s"%(artist, songName, self.mp3ext)
-            newFileNameWithPath = os.path.join(path, newFileName)
-            os.rename(originalFileNameWithPath, newFileNameWithPath)
-            fileName=newFileName
-            title = songName
-        # artist is known from file and from input
-        elif " - " in songName and len(artist)>1:
-            metadataSongName = self.convert_songname_on_metadata(songName)
-            title = metadataSongName['title']
-            newFileName = "%s - %s%s"%(artist, title, self.mp3ext)
-            newFileNameWithPath = os.path.join(path, newFileName)
-            os.rename(originalFileNameWithPath, newFileNameWithPath)
-        # ----- do not modify filename, because do not have enough information ----
-        # get artist from filename, when we do not know artist
-        elif " - " in songName and (artist is None or len(artist)==0):
-            metadataSongName = self.convert_songname_on_metadata(songName)
-            newFileName = "%s%s"%(songName, self.mp3ext)
-            artist = metadataSongName['artist']
-            title = metadataSongName['title']
-        # artist is unknown
-        elif not " - " in songName and (artist is None or len(artist)==0):
-            warningInfo="WARNING: artist for song %s is not known"%(songName)
-            print (bcolors.WARNING + warningInfo + bcolors.ENDC)
-            newFileName = "%s%s"%(songName, self.mp3ext)
-            title = songName
-            artist = None
-        else:
-            warningInfo="ERROR: Unknown situation with songname"
+        analyzeResult = self.analyzeAndRenameFilename(path, fileName, artist)
+        if analyzeResult is None:
+            warningInfo="ERROR: Unknown situation with fileName"
             print (bcolors.FAIL + warningInfo + bcolors.ENDC)
             return
 
         # saving metadata
+        title = analyzeResult.title
+        artist = analyzeResult.artist
+        newFileName = analyzeResult.newFileName
+
         newFileNameWithPath = os.path.join(path, newFileName)
         metatag = EasyID3(newFileNameWithPath)
         if albumName is not None:
@@ -207,7 +228,6 @@ class MetadataManager:
     def rename_and_add_metadata_to_playlist(self, PLAYLISTS_PATH, trackNumber, playlistName, artist, songName):
         path=os.path.join(PLAYLISTS_PATH, playlistName)
         albumName="YT "+playlistName
-
         fileName="%s%s"%(songName,self.mp3ext)
 
         if not os.path.isfile(os.path.join(path, fileName)):
@@ -217,44 +237,15 @@ class MetadataManager:
 
         #rename song file to remove useless text
         fileName = self.remove_sheet_from_filename(path, fileName)
-        songName = fileName.replace(self.mp3ext, "")
-
-        # if songName doesn't contain artist and artist is known
-        # rename filename
-        if not " - " in songName and len(artist)>1:
-            originalFileNameWithPath = os.path.join(path, fileName)
-            newFileName = "%s - %s%s"%(artist, songName, self.mp3ext)
-            newFileNameWithPath = os.path.join(path, newFileName)
-            os.rename(originalFileNameWithPath, newFileNameWithPath)
-            fileName=newFileName
-            title = songName
-        # artist is known from file and from input
-        elif " - " in songName and len(artist)>1:
-            metadataSongName = self.convert_songname_on_metadata(songName)
-            title = metadataSongName['title']
-            newFileName = "%s - %s%s"%(artist, title, self.mp3ext)
-            originalFileNameWithPath = os.path.join(path, fileName)
-            newFileNameWithPath = os.path.join(path, newFileName)
-            os.rename(originalFileNameWithPath, newFileNameWithPath)
-            fileName=newFileName
-        # get artist from filename, when we do not know artist
-        elif " - " in songName and (artist is None or len(artist)==0):
-            # get metadata from filename
-            metadataSongName = self.convert_songname_on_metadata(songName)
-            newFileName = "%s%s"%(songName, self.mp3ext)
-            artist = metadataSongName['artist']
-            title = metadataSongName['title']
-        # artist is unknown
-        elif not " - " in songName and (artist is None or len(artist)==0):
-            warningInfo="WARNING: artist for song %s is not known"%(songName)
-            print (bcolors.WARNING + warningInfo + bcolors.ENDC)
-            newFileName = "%s%s"%(songName, self.mp3ext)
-            title = songName
-            artist = None
-        else:
-            warningInfo="ERROR: Unknown situation with songname"
+        analyzeResult = self.analyzeAndRenameFilename(path,fileName,artist)
+        if analyzeResult is None:
+            warningInfo="ERROR: Unknown situation with fileName"
             print (bcolors.FAIL + warningInfo + bcolors.ENDC)
             return
+
+        newFileName = analyzeResult.newFileName
+        artist = analyzeResult.artist
+        title = analyzeResult.title
 
         newFileNameWithPath = os.path.join(path, newFileName)
         metatag = EasyID3(newFileNameWithPath)
