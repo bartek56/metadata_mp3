@@ -8,9 +8,7 @@ import shutil
 import unittest
 from mutagen.easyid3 import EasyID3
 
-sys.path.append("..")
 import metadata_mp3
-
 
 class TestRenameSongName(TestCase):
     def setUp(self):
@@ -135,7 +133,6 @@ class TestLookingForFileAccordWithYTFilename(TestCase):
         resultSongName = self.metadata_mp3.lookingForFileAccordWithYTFilename(self.currentDirectory, songName, artist)
         self.assertEqual(resultSongName, songName)
         os.remove(testFileNameWithPath)
-
 
 class TestAddMetadataSong(TestCase):
 
@@ -446,6 +443,74 @@ class TestAddMetadataPlaylist(TestCase):
         self.assertIn('tracknumber', metatag)
 
         self.assertEqual(metatag['title'][0], titleTest)
+        self.assertEqual(metatag['album'][0], "YT "+playlistName_album)
+        self.assertEqual(metatag['tracknumber'][0], str(trackNumber))
+
+        shutil.rmtree(os.path.join(self.currentDirectory,playlistName_album))
+
+    def test_artistIsTooLong(self):
+        playlistName_album = "spokojne-sad"
+        fileNameTest = "Colorblind.mp3"
+
+        titleTest = "Colorblind"
+        artist = "very long artist, 11111111111, 222222222222, 3333333333333, 44444444444444, 55555555555555, 66666666666666"
+        artistResult = "very long artist, 11111111111, 222222222222, 3333333333333, 44444444444444"
+
+        trackNumber = 1
+
+        filenameAfter = "%s - %s.mp3"%(artistResult, titleTest)
+
+        testFileNameWithPath = self.renameFile(fileNameTest, playlistName_album)
+        songNameBefore = fileNameTest.replace(".mp3","")
+
+        newFileNameWithPath = self.metadata_mp3.rename_and_add_metadata_to_playlist(self.currentDirectory, trackNumber, playlistName_album, artist, songNameBefore)
+
+        self.assertTrue(os.path.isfile(newFileNameWithPath))
+
+        self.assertEqual(newFileNameWithPath, str(self.currentDirectory+"/"+playlistName_album + "/" +filenameAfter))
+
+        metatag = EasyID3(newFileNameWithPath)
+        self.assertIn('title', metatag)
+        self.assertIn('artist', metatag)
+        self.assertIn('album', metatag)
+        self.assertIn('tracknumber', metatag)
+
+        self.assertEqual(metatag['title'][0], titleTest)
+        self.assertEqual(metatag['artist'][0], artistResult)
+        self.assertEqual(metatag['album'][0], "YT "+playlistName_album)
+        self.assertEqual(metatag['tracknumber'][0], str(trackNumber))
+
+        shutil.rmtree(os.path.join(self.currentDirectory,playlistName_album))
+
+    def test_artistIsTooLong2(self):
+        playlistName_album = "spokojne-sad"
+
+        titleTest = "Colorblind"
+        artist = "very long artist 11111111111 222222222222 3333333333333 44444444444444 55555555555555 66666666666666"
+        artistResult = "very long artist 11111111111 222222222222 3333333333333 44444444444444"
+
+        fileNameTest = "Colorblind.mp3"
+        trackNumber = 1
+
+        filenameAfter = "%s - %s.mp3"%(artistResult, titleTest)
+
+        testFileNameWithPath = self.renameFile(fileNameTest, playlistName_album)
+        songNameBefore = fileNameTest.replace(".mp3","")
+
+        newFileNameWithPath = self.metadata_mp3.rename_and_add_metadata_to_playlist(self.currentDirectory, trackNumber, playlistName_album, artist, songNameBefore)
+
+        self.assertTrue(os.path.isfile(newFileNameWithPath))
+
+        self.assertEqual(newFileNameWithPath, str(self.currentDirectory+"/"+playlistName_album + "/" +filenameAfter))
+
+        metatag = EasyID3(newFileNameWithPath)
+        self.assertIn('title', metatag)
+        self.assertIn('artist', metatag)
+        self.assertIn('album', metatag)
+        self.assertIn('tracknumber', metatag)
+
+        self.assertEqual(metatag['title'][0], titleTest)
+        self.assertEqual(metatag['artist'][0], artistResult)
         self.assertEqual(metatag['album'][0], "YT "+playlistName_album)
         self.assertEqual(metatag['tracknumber'][0], str(trackNumber))
 

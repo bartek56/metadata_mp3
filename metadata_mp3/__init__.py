@@ -3,8 +3,11 @@ import sys
 import getopt
 import os
 import warnings
+import logging
 from mutagen.easyid3 import EasyID3
 from mutagen.mp3 import MP3
+
+logger = logging.getLogger(__name__)
 
 class bcolors:
     HEADER = '\033[95m'
@@ -25,6 +28,8 @@ class FileData:
 class MetadataManager:
     def __init__(self):
         self.mp3ext = ".mp3"
+        self.maxLenghtOfArtist = 80
+        self.maxLenghtOfTitle = 120
 
     def showMP3Info(self, fileNameWithPath):
         print (bcolors.OKGREEN + fileNameWithPath + bcolors.ENDC)
@@ -137,9 +142,23 @@ class MetadataManager:
         else:
             return None
 
+    def _cutLenght(self, text, maxLength):
+        #max filename size is 255
+        while len(text)>maxLength:
+            temp = text.split(' ')
+            text = text.replace(" "+temp[-1], '')
+
+        if len(text)>0 and (text[-1] == ',' or text[-1]==' '):
+            text = text[:-1]
+        return text
+
     def analyzeAndRenameFilename(self, path, fileName, artist):
         songName = fileName.replace(self.mp3ext, "")
         originalFileNameWithPath = os.path.join(path, fileName)
+        artist = self._cutLenght(artist, self.maxLenghtOfArtist)
+        if len(songName) > self.maxLenghtOfTitle:
+            songName = self._cutLenght(songName, self.maxLenghtOfTitle)
+
         # any condition has to verify variables: title, artist, newFileName
         # if songName doesn't contain artist and artist is known
         # rename filename
@@ -231,7 +250,7 @@ class MetadataManager:
 
         #rename song file to remove useless text
         fileName = self.remove_sheet_from_filename(path, fileName)
-        analyzeResult = self.analyzeAndRenameFilename(path,fileName,artist)
+        analyzeResult = self.analyzeAndRenameFilename(path, fileName, artist)
         if analyzeResult is None:
             warningInfo="ERROR: Unknown situation with fileName"
             print (bcolors.FAIL + warningInfo + bcolors.ENDC)
