@@ -11,89 +11,86 @@ from mutagen.easyid3 import EasyID3
 import metadata_mp3
 
 class TestRenameSongName(TestCase):
+    songNameExpected = "Counting Crows - Colorblind"
     def setUp(self):
         self.metadata_mp3 = metadata_mp3.MetadataManager()
 
     def test_1_1(self):
         songNameBefore = "Counting Crows - Colorblind (Official Video) "
-        songNameAfter = "Counting Crows - Colorblind"
-        songNameAfterTest = self.metadata_mp3.remove_sheet_from_songName(songNameBefore)
-        self.assertEqual(songNameAfter, songNameAfterTest)
+        songNameAfter = self.metadata_mp3.remove_sheet_from_songName(songNameBefore)
+        self.assertEqual(self.songNameExpected, songNameAfter)
 
     def test_1_2(self):
         songNameBefore = "Counting Crows - Colorblind ( ) "
-        songNameAfter = "Counting Crows - Colorblind"
-        songNameAfterTest = self.metadata_mp3.remove_sheet_from_songName(songNameBefore)
-        self.assertEqual(songNameAfter, songNameAfterTest)
+        songNameAfter = self.metadata_mp3.remove_sheet_from_songName(songNameBefore)
+        self.assertEqual(self.songNameExpected, songNameAfter)
 
-    def test_1_2(self):
+    def test_1_3(self):
         songNameBefore = "Counting Crows - Colorblind [] "
-        songNameAfter = "Counting Crows - Colorblind"
-        songNameAfterTest = self.metadata_mp3.remove_sheet_from_songName(songNameBefore)
-        self.assertEqual(songNameAfter, songNameAfterTest)
+        songNameAfter = self.metadata_mp3.remove_sheet_from_songName(songNameBefore)
+        self.assertEqual(self.songNameExpected, songNameAfter)
 
     def test_2_1(self):
         songNameBefore = "Counting Crows - Colorblind test"
-        songNameAfter = "Counting Crows - Colorblind"
-        songNameAfterTest = self.metadata_mp3.remove_sheet_from_songName(songNameBefore)
-        self.assertNotEqual(songNameAfter, songNameAfterTest)
+        songNameAfter = self.metadata_mp3.remove_sheet_from_songName(songNameBefore)
+        self.assertEqual(songNameBefore, songNameAfter)
 
 class TestConvertSongnameOnMetadata(TestCase):
     def setUp(self):
         self.metadata_mp3 = metadata_mp3.MetadataManager()
 
+    def checkArtistAndTitle(self, metadata:dict, artist, title):
+        self.assertEqual(metadata['artist'], artist)
+        self.assertEqual(metadata['title'], title)
+
     def test_1(self):
         songNameBefore = "Counting Crows - Colorblind"
         metadataSongName = self.metadata_mp3.convert_songname_on_metadata(songNameBefore)
-        self.assertEqual(metadataSongName['artist'], "Counting Crows")
-        self.assertEqual(metadataSongName['title'], "Colorblind")
+        self.checkArtistAndTitle(metadataSongName, "Counting Crows", "Colorblind")
 
     def test_2(self):
         songNameBefore = "Counting Crows - Colorblind test"
         metadataSongName = self.metadata_mp3.convert_songname_on_metadata(songNameBefore)
-        self.assertEqual(metadataSongName['artist'], "Counting Crows")
-        self.assertEqual(metadataSongName['title'], "Colorblind test")
+        self.checkArtistAndTitle(metadataSongName, "Counting Crows", "Colorblind test")
 
     def test_3(self):
         songNameBefore = "Counting Crows-Colorblind"
         metadataSongName = self.metadata_mp3.convert_songname_on_metadata(songNameBefore)
-        self.assertEqual(metadataSongName['artist'], "Counting Crows")
-        self.assertEqual(metadataSongName['title'], "Colorblind")
+        self.checkArtistAndTitle(metadataSongName, "Counting Crows", "Colorblind")
 
     def test_4(self):
         songNameBefore = "Counting Crows-Colorblind-test"
         metadataSongName = self.metadata_mp3.convert_songname_on_metadata(songNameBefore)
-        self.assertEqual(metadataSongName['artist'], "")
-        self.assertEqual(metadataSongName['title'], songNameBefore)
+        self.checkArtistAndTitle(metadataSongName, "", songNameBefore)
 
     def test_5(self):
-        songNameBefore = "Counting Crows-Colorblind-test"
-        metadataSongName = self.metadata_mp3.convert_songname_on_metadata(songNameBefore)
-        self.assertEqual(metadataSongName['artist'], "")
-        self.assertEqual(metadataSongName['title'], songNameBefore)
-
-    def test_6(self):
         songNameBefore = "Counting Crows - Colorblind-test"
         metadataSongName = self.metadata_mp3.convert_songname_on_metadata(songNameBefore)
-        self.assertEqual(metadataSongName['artist'], "Counting Crows")
-        self.assertEqual(metadataSongName['title'], "Colorblind-test")
+        self.checkArtistAndTitle(metadataSongName, "Counting Crows", "Colorblind-test")
 
-    def test_7(self):
+    def test_6(self):
         songNameBefore = "Counting Crows - Colorblind - test"
         metadataSongName = self.metadata_mp3.convert_songname_on_metadata(songNameBefore)
-        self.assertEqual(metadataSongName['artist'], "Counting Crows")
-        self.assertEqual(metadataSongName['title'], "Colorblind-test")
+        self.checkArtistAndTitle(metadataSongName, "Counting Crows", "Colorblind-test")
 
     def test_removeSheet(self):
         songNameBefore = "Counting Crows - Colorblind (Official Video) []"
         songName = self.metadata_mp3.remove_sheet_from_songName(songNameBefore)
         metadataSongName = self.metadata_mp3.convert_songname_on_metadata(songName)
-        self.assertEqual(metadataSongName['artist'], "Counting Crows")
-        self.assertEqual(metadataSongName['title'], "Colorblind")
+        self.checkArtistAndTitle(metadataSongName, "Counting Crows", "Colorblind")
 
 class TestLookingForFileAccordWithYTFilename(TestCase):
+    artist = "Counting Crows"
     def setUp(self):
         self.metadata_mp3 = metadata_mp3.MetadataManager()
+
+    def tearDown(self):
+        os.remove(self.testFileNameWithPath)
+
+    def setTestFileName(self, testFileName):
+        self.testFileName = testFileName
+        self.testFileNameWithPath = self.renameTestFile(self.testFileName)
+        self.songNameExpected = self.testFileName.replace(".mp3", "")
 
     def renameTestFile(self, testFileName):
         originalTestFileName = "test.mp3"
@@ -105,34 +102,28 @@ class TestLookingForFileAccordWithYTFilename(TestCase):
         return testFileNameWithPath
 
     def test_1(self):
-        testFileName = "Counting Crows - Colorblind.mp3"
-        testFileNameWithPath = self.renameTestFile(testFileName)
-        songName = "Counting Crows - Colorblind"
-        artist = "Counting Crows"
+        self.setTestFileName("Counting Crows - Colorblind.mp3")
+        title = "Colorblind"
 
-        resultSongName = self.metadata_mp3.lookingForFileAccordWithYTFilename(self.currentDirectory, songName, artist)
-        self.assertEqual(resultSongName, songName)
-        os.remove(testFileNameWithPath)
+        resultSongName = self.metadata_mp3.lookingForFileAccordWithYTFilename(self.currentDirectory, title, self.artist)
+
+        self.assertEqual(resultSongName, self.songNameExpected)
 
     def test_2(self):
-        testFileName = "Counting Crows - Colorblind-test.mp3"
-        testFileNameWithPath = self.renameTestFile(testFileName)
-        songName = testFileName.replace(".mp3","")
-        artist = "Counting Crows"
+        self.setTestFileName("Counting Crows - Colorblind-test.mp3")
+        title = "Colorblind-test"
 
-        resultSongName = self.metadata_mp3.lookingForFileAccordWithYTFilename(self.currentDirectory, songName, artist)
-        self.assertEqual(resultSongName, songName)
-        os.remove(testFileNameWithPath)
+        resultSongName = self.metadata_mp3.lookingForFileAccordWithYTFilename(self.currentDirectory, title, self.artist)
+
+        self.assertEqual(resultSongName, self.songNameExpected)
 
     def test_3(self):
-        testFileName = "Colorblind.mp3"
-        testFileNameWithPath = self.renameTestFile(testFileName)
-        songName = testFileName.replace(".mp3","")
-        artist = "Counting Crows"
+        self.setTestFileName("Colorblind.mp3")
+        title = "Colorblind"
 
-        resultSongName = self.metadata_mp3.lookingForFileAccordWithYTFilename(self.currentDirectory, songName, artist)
-        self.assertEqual(resultSongName, songName)
-        os.remove(testFileNameWithPath)
+        resultSongName = self.metadata_mp3.lookingForFileAccordWithYTFilename(self.currentDirectory, title, self.artist)
+
+        self.assertEqual(resultSongName, self.songNameExpected)
 
 class TestAddMetadataSong(TestCase):
     title = "Colorblind"
@@ -418,7 +409,6 @@ class TestUpdateMetadataYoutube(TestCase):
         newFilesList = self.metadata_mp3.update_metadata_youtube(currentDirectory,albumTest)
         i = 0
         for newFile in newFilesList:
-            print(newFile)
             self.assertTrue(os.path.isfile(newFile))
             metatag = EasyID3(newFile)
 
