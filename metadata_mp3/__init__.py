@@ -36,7 +36,7 @@ class MetadataManager:
         audio = MP3(fileNameWithPath, ID3=EasyID3)
         print (audio.pprint())
 
-    def remove_sheet_from_songName(self, songName):
+    def _removeSheetFromSongName(self, songName):
 
         unsupportedName = ["Oficial Video HD",
                         "Official Video",
@@ -86,11 +86,11 @@ class MetadataManager:
 
         return songName
 
-    def remove_sheet_from_filename(self, path, originalFileName):
+    def _removeSheetFromFilename(self, path, originalFileName):
 
         fileNameWithoutExtension = originalFileName.replace(self.mp3ext, "")
 
-        fileNameWithoutExtension = self.remove_sheet_from_songName(fileNameWithoutExtension)
+        fileNameWithoutExtension = self._removeSheetFromSongName(fileNameWithoutExtension)
         fileNameWithExtension = "%s%s"%(fileNameWithoutExtension, self.mp3ext)
 
         originalFileNameWithPath=os.path.join(path, originalFileName)
@@ -99,7 +99,7 @@ class MetadataManager:
 
         return fileNameWithExtension
 
-    def convert_songname_on_metadata(self, songName):
+    def _convertSongnameOnMetadata(self, songName):
         slots = songName.split(" - ")
         metadata ={ 'tracknumber': "1",}
         if len(slots) == 2:
@@ -127,21 +127,6 @@ class MetadataManager:
 
         return metadata
 
-    def lookingForFileAccordWithYTFilename(self, path, songName, artist):
-
-        songName = self.remove_sheet_from_songName(songName)
-        fileName="%s%s"%(songName,self.mp3ext)
-
-        if os.path.isfile(os.path.join(path, fileName)):
-            return songName
-
-        songName = "%s - %s"%(artist, songName)
-        fileName="%s%s"%(songName,self.mp3ext)
-        if os.path.isfile(os.path.join(path, fileName)):
-            return songName
-        else:
-            return None
-
     def _cutLenght(self, text, maxLength):
         #max filename size is 255
         while len(text)>maxLength:
@@ -152,7 +137,7 @@ class MetadataManager:
             text = text[:-1]
         return text
 
-    def analyzeAndRenameFilename(self, path, fileName, artist):
+    def _analyzeAndRenameFilename(self, path, fileName, artist):
         songName = fileName.replace(self.mp3ext, "")
         originalFileNameWithPath = os.path.join(path, fileName)
         artist = self._cutLenght(artist, self.maxLenghtOfArtist)
@@ -172,7 +157,7 @@ class MetadataManager:
 
         # artist is known from file and from input
         if " - " in songName and len(artist)>1:
-            metadataSongName = self.convert_songname_on_metadata(songName)
+            metadataSongName = self._convertSongnameOnMetadata(songName)
             title = metadataSongName['title']
             newFileName = "%s - %s%s"%(artist, title, self.mp3ext)
             newFileNameWithPath = os.path.join(path, newFileName)
@@ -182,7 +167,7 @@ class MetadataManager:
         # ----- do not modify filename, because do not have enough information ----
         # get artist from filename, when we do not know artist
         if " - " in songName and (artist is None or len(artist)==0):
-            metadataSongName = self.convert_songname_on_metadata(songName)
+            metadataSongName = self._convertSongnameOnMetadata(songName)
             newFileName = "%s%s"%(songName, self.mp3ext)
             artist = metadataSongName['artist']
             title = metadataSongName['title']
@@ -201,7 +186,7 @@ class MetadataManager:
         return None
 
     #youtubedl
-    def rename_and_add_metadata_to_song(self, MUSIC_PATH, albumName, artist, songName):
+    def renameAndAddMetadataToSong(self, MUSIC_PATH, albumName, artist, songName):
         path=MUSIC_PATH
 
         fileName="%s%s"%(songName,self.mp3ext)
@@ -212,9 +197,9 @@ class MetadataManager:
             return
 
         #rename song file to remove useless text
-        fileName = self.remove_sheet_from_filename(path, fileName)
+        fileName = self._removeSheetFromFilename(path, fileName)
 
-        analyzeResult = self.analyzeAndRenameFilename(path, fileName, artist)
+        analyzeResult = self._analyzeAndRenameFilename(path, fileName, artist)
         if analyzeResult is None:
             warningInfo="ERROR: Unknown situation with fileName"
             print (bcolors.FAIL + warningInfo + bcolors.ENDC)
@@ -237,8 +222,8 @@ class MetadataManager:
         self.showMP3Info(newFileNameWithPath)
         return newFileNameWithPath
 
-    # youtubedl
-    def rename_and_add_metadata_to_playlist(self, PLAYLISTS_PATH, trackNumber, playlistName, artist, songName):
+    #youtubedl
+    def renameAndAddMetadataToPlaylist(self, PLAYLISTS_PATH, trackNumber, playlistName, artist, songName):
         path=os.path.join(PLAYLISTS_PATH, playlistName)
         albumName="YT "+playlistName
         fileName="%s%s"%(songName,self.mp3ext)
@@ -249,8 +234,8 @@ class MetadataManager:
             return
 
         #rename song file to remove useless text
-        fileName = self.remove_sheet_from_filename(path, fileName)
-        analyzeResult = self.analyzeAndRenameFilename(path, fileName, artist)
+        fileName = self._removeSheetFromFilename(path, fileName)
+        analyzeResult = self._analyzeAndRenameFilename(path, fileName, artist)
         if analyzeResult is None:
             warningInfo="ERROR: Unknown situation with fileName"
             print (bcolors.FAIL + warningInfo + bcolors.ENDC)
@@ -272,7 +257,23 @@ class MetadataManager:
         self.showMP3Info(newFileNameWithPath)
         return newFileNameWithPath
 
-    def update_metadata_youtube(self, PLAYLISTS_PATH, playlistName):
+    #youtubedl
+    def lookingForFileAccordWithYTFilename(self, path, songName, artist):
+
+        songName = self._removeSheetFromSongName(songName)
+        fileName="%s%s"%(songName,self.mp3ext)
+
+        if os.path.isfile(os.path.join(path, fileName)):
+            return songName
+
+        songName = "%s - %s"%(artist, songName)
+        fileName="%s%s"%(songName,self.mp3ext)
+        if os.path.isfile(os.path.join(path, fileName)):
+            return songName
+        else:
+            return None
+
+    def updateMetadataYoutube(self, PLAYLISTS_PATH, playlistName):
         path=os.path.join(PLAYLISTS_PATH,playlistName)
         albumName="YT "+playlistName
         newFilesList = []
@@ -282,10 +283,10 @@ class MetadataManager:
         for x in range(len(filesList)):
             originalFileName = filesList[x]
 
-            newFileName = self.remove_sheet_from_filename(path, originalFileName)
+            newFileName = self._removeSheetFromFilename(path, originalFileName)
             newSongName = newFileName.replace(self.mp3ext, "")
 
-            metadataSongName = self.convert_songname_on_metadata(newSongName)
+            metadataSongName = self._convertSongnameOnMetadata(newSongName)
             newFileNameWithPath = os.path.join(path, newFileName)
             if not os.path.isfile(newFileNameWithPath):
                 warningInfo="WARNING: %s not exist"%(newFileName)
@@ -301,7 +302,7 @@ class MetadataManager:
             self.showMP3Info(newFileNameWithPath)
         return newFilesList
 
-    def update_metadata(self, catalog, albumName):
+    def updateMetadata(self, catalog, albumName):
         newFilesList = []
 
         filesList = [f for f in os.listdir(catalog) if f.endswith(self.mp3ext)]
@@ -309,10 +310,10 @@ class MetadataManager:
         for x in range(len(filesList)):
             originalFileName = filesList[x]
 
-            newFileName = self.remove_sheet_from_filename(catalog, originalFileName)
+            newFileName = self._removeSheetFromFilename(catalog, originalFileName)
             newSongName = newFileName.replace(self.mp3ext, "")
 
-            metadataSongName = self.convert_songname_on_metadata(newSongName)
+            metadataSongName = self._convertSongnameOnMetadata(newSongName)
             newFileNameWithPath = os.path.join(catalog, newFileName)
             if not os.path.isfile(newFileNameWithPath):
                 warningInfo="WARNING: %s not exist"%(newFileName)
@@ -345,7 +346,6 @@ class MetadataManager:
         filesList = [f for f in os.listdir(catalog) if f.endswith(self.mp3ext)]
         filesList.sort()
         for fileName in filesList:
-            print(fileName)
             fileNameWithPath = os.path.join(catalog, fileName)
             metatag = EasyID3(fileNameWithPath)
             metatag['artist'] = artistName

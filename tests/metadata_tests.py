@@ -17,22 +17,22 @@ class TestRenameSongName(TestCase):
 
     def test_1_1(self):
         songNameBefore = "Counting Crows - Colorblind (Official Video) "
-        songNameAfter = self.metadata_mp3.remove_sheet_from_songName(songNameBefore)
+        songNameAfter = self.metadata_mp3._removeSheetFromSongName(songNameBefore)
         self.assertEqual(self.songNameExpected, songNameAfter)
 
     def test_1_2(self):
         songNameBefore = "Counting Crows - Colorblind ( ) "
-        songNameAfter = self.metadata_mp3.remove_sheet_from_songName(songNameBefore)
+        songNameAfter = self.metadata_mp3._removeSheetFromSongName(songNameBefore)
         self.assertEqual(self.songNameExpected, songNameAfter)
 
     def test_1_3(self):
         songNameBefore = "Counting Crows - Colorblind [] "
-        songNameAfter = self.metadata_mp3.remove_sheet_from_songName(songNameBefore)
+        songNameAfter = self.metadata_mp3._removeSheetFromSongName(songNameBefore)
         self.assertEqual(self.songNameExpected, songNameAfter)
 
     def test_2_1(self):
         songNameBefore = "Counting Crows - Colorblind test"
-        songNameAfter = self.metadata_mp3.remove_sheet_from_songName(songNameBefore)
+        songNameAfter = self.metadata_mp3._removeSheetFromSongName(songNameBefore)
         self.assertEqual(songNameBefore, songNameAfter)
 
 class TestConvertSongnameOnMetadata(TestCase):
@@ -45,38 +45,38 @@ class TestConvertSongnameOnMetadata(TestCase):
 
     def test_1(self):
         songNameBefore = "Counting Crows - Colorblind"
-        metadataSongName = self.metadata_mp3.convert_songname_on_metadata(songNameBefore)
+        metadataSongName = self.metadata_mp3._convertSongnameOnMetadata(songNameBefore)
         self.checkArtistAndTitle(metadataSongName, "Counting Crows", "Colorblind")
 
     def test_2(self):
         songNameBefore = "Counting Crows - Colorblind test"
-        metadataSongName = self.metadata_mp3.convert_songname_on_metadata(songNameBefore)
+        metadataSongName = self.metadata_mp3._convertSongnameOnMetadata(songNameBefore)
         self.checkArtistAndTitle(metadataSongName, "Counting Crows", "Colorblind test")
 
     def test_3(self):
         songNameBefore = "Counting Crows-Colorblind"
-        metadataSongName = self.metadata_mp3.convert_songname_on_metadata(songNameBefore)
+        metadataSongName = self.metadata_mp3._convertSongnameOnMetadata(songNameBefore)
         self.checkArtistAndTitle(metadataSongName, "Counting Crows", "Colorblind")
 
     def test_4(self):
         songNameBefore = "Counting Crows-Colorblind-test"
-        metadataSongName = self.metadata_mp3.convert_songname_on_metadata(songNameBefore)
+        metadataSongName = self.metadata_mp3._convertSongnameOnMetadata(songNameBefore)
         self.checkArtistAndTitle(metadataSongName, "", songNameBefore)
 
     def test_5(self):
         songNameBefore = "Counting Crows - Colorblind-test"
-        metadataSongName = self.metadata_mp3.convert_songname_on_metadata(songNameBefore)
+        metadataSongName = self.metadata_mp3._convertSongnameOnMetadata(songNameBefore)
         self.checkArtistAndTitle(metadataSongName, "Counting Crows", "Colorblind-test")
 
     def test_6(self):
         songNameBefore = "Counting Crows - Colorblind - test"
-        metadataSongName = self.metadata_mp3.convert_songname_on_metadata(songNameBefore)
+        metadataSongName = self.metadata_mp3._convertSongnameOnMetadata(songNameBefore)
         self.checkArtistAndTitle(metadataSongName, "Counting Crows", "Colorblind-test")
 
     def test_removeSheet(self):
         songNameBefore = "Counting Crows - Colorblind (Official Video) []"
-        songName = self.metadata_mp3.remove_sheet_from_songName(songNameBefore)
-        metadataSongName = self.metadata_mp3.convert_songname_on_metadata(songName)
+        songName = self.metadata_mp3._removeSheetFromSongName(songNameBefore)
+        metadataSongName = self.metadata_mp3._convertSongnameOnMetadata(songName)
         self.checkArtistAndTitle(metadataSongName, "Counting Crows", "Colorblind")
 
 class TestLookingForFileAccordWithYTFilename(TestCase):
@@ -406,7 +406,7 @@ class TestUpdateMetadataYoutube(TestCase):
         testFileNameWithPath = os.path.join(currentDirectory,albumTest, testFileName3)
         shutil.copy(originalTestFileNameWithPath, testFileNameWithPath)
 
-        newFilesList = self.metadata_mp3.update_metadata_youtube(currentDirectory,albumTest)
+        newFilesList = self.metadata_mp3.updateMetadataYoutube(currentDirectory,albumTest)
         i = 0
         for newFile in newFilesList:
             self.assertTrue(os.path.isfile(newFile))
@@ -454,7 +454,7 @@ class TestUpdateMetadata(TestCase):
         testFileNameWithPath = os.path.join(currentDirectory, albumTest, testFileName3)
         shutil.copy(originalTestFileNameWithPath, testFileNameWithPath)
 
-        newFilesList = self.metadata_mp3.update_metadata(albumDirectory, albumTest)
+        newFilesList = self.metadata_mp3.updateMetadata(albumDirectory, albumTest)
         i = 0
         for newFile in newFilesList:
             print(newFile)
