@@ -167,7 +167,7 @@ class TestAddMetadataSong(TestCase):
 
     def renameAndAddMetadataToSongCall(self):
         self.renameFile(self.fileNameInput)
-        self.newFileNameWithPath = self.metadata_mp3.rename_and_add_metadata_to_song(self.currentDirectory,
+        self.newFileNameWithPath = self.metadata_mp3.renameAndAddMetadataToSong(self.currentDirectory,
                                                                                 self.albumInput,  self.artistInput, self.songNameInput)
 
     def checkSongMetadata(self, fileNameWithPath):
@@ -314,7 +314,7 @@ class TestAddMetadataPlaylist(TestCase):
 
     def renameAndAddMetadataToPlatlistCall(self):
         self.renameFile(self.fileNameInput, self.playlistName)
-        return self.metadata_mp3.rename_and_add_metadata_to_playlist(
+        return self.metadata_mp3.renameAndAddMetadataToPlaylist(
             self.currentDirectory, 1, self.playlistName, self.artistInput, self.songNameInput)
 
     def test_artistIsKnownFromInput(self):
