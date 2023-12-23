@@ -129,16 +129,20 @@ class MetadataManager:
 
     def _cutLenght(self, text:str, maxLength):
         #max filename size is 255
+        originalText = text
         if ", " in text:
             splitSign = ", "
         else:
             splitSign = " "
+        counter = 0
+        limit = maxLength/4
         while len(text)>maxLength:
-            temp = text.split(splitSign)
-            text = text.replace(splitSign+temp[-1], '')
-
-        if len(text)>0 and (text[-1] == ',' or text[-1]==' '):
-            text = text[:-1]
+            temp = text.rsplit(splitSign, 1)
+            text = temp[0]
+            counter+=1
+            # if werid text is here, break loop
+            if counter >= limit:
+                return originalText[0:maxLength]
         return text
 
     def _analyzeAndRenameFilename(self, path, fileName, artist):

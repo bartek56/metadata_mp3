@@ -374,8 +374,20 @@ class TestAddMetadataPlaylist(TestCase):
         self.checkMetadataFromPlaylistFile(newFileNameWithPath)
 
     def test_artistIsTooLong3(self):
-        artistTooLong = "Alan Walker, Sasha Alex Sloan, Alan Walker, Kasper, Alan Walker, Kristin Carpenter, Rasmus Budny, Fredrik Borch Olsen, Gunnar Greve, Marcus Arnbekk, Mats Lie Skåre, Kristin Carpenter, Rasmus Budny, Fredrik Borch Olsen, Gunnar Greve, Marcus Arnbekk, Mats Lie Skåre"
-        artistTooLongExpected = "Alan Walker, Sasha Alex Sloan, Alan Walker, Kasper, Alan Walker"
+        artistTooLong = "aaaaaaaaaa, bbbbbbbbbbb, cccccccccc, dddddddddd, bbbbbbbbbbb, bbbbbbbbbbb, gggggggg, hhhhhh, iiiiiiii, bbbbbbbbbbb"
+        artistTooLongExpected = "aaaaaaaaaa, bbbbbbbbbbb, cccccccccc, dddddddddd, bbbbbbbbbbb, bbbbbbbbbbb"
+        fileNameTitleAndLongArtistTest = "%s - %s.mp3"%(artistTooLongExpected, self.title)
+
+        self.setInputParameters(self.title, artistTooLong, self.fileNameTitleTest)
+        self.setExpectedParameters(self.title, artistTooLongExpected, fileNameTitleAndLongArtistTest)
+
+        newFileNameWithPath = self.renameAndAddMetadataToPlatlistCall()
+
+        self.checkMetadataFromPlaylistFile(newFileNameWithPath)
+
+    def test_artistIsTooLong4(self):
+        artistTooLong = "aaaaaaaaaa, bbbbbbbbbbb, cccccccccc, dddddddddd, eeeeeeeeee, fffffffffff, ggggggggggg, hhhhhh, iiiiiiii, jjjjjjjj, "
+        artistTooLongExpected = "aaaaaaaaaa, bbbbbbbbbbb, cccccccccc, dddddddddd, eeeeeeeeee, fffffffffff"
         fileNameTitleAndLongArtistTest = "%s - %s.mp3"%(artistTooLongExpected, self.title)
 
         self.setInputParameters(self.title, artistTooLong, self.fileNameTitleTest)
