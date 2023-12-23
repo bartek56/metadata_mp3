@@ -127,11 +127,15 @@ class MetadataManager:
 
         return metadata
 
-    def _cutLenght(self, text, maxLength):
+    def _cutLenght(self, text:str, maxLength):
         #max filename size is 255
+        if ", " in text:
+            splitSign = ", "
+        else:
+            splitSign = " "
         while len(text)>maxLength:
-            temp = text.split(' ')
-            text = text.replace(" "+temp[-1], '')
+            temp = text.split(splitSign)
+            text = text.replace(splitSign+temp[-1], '')
 
         if len(text)>0 and (text[-1] == ',' or text[-1]==' '):
             text = text[:-1]
@@ -142,6 +146,8 @@ class MetadataManager:
         originalFileNameWithPath = os.path.join(path, fileName)
         artist = self._cutLenght(artist, self.maxLenghtOfArtist)
         if len(songName) > self.maxLenghtOfTitle:
+            print("too long songname")
+            print(songName)
             songName = self._cutLenght(songName, self.maxLenghtOfTitle)
 
         # any condition has to verify variables: title, artist, newFileName
