@@ -314,6 +314,9 @@ class MetadataManager:
 
     def updateMetadata(self, catalog, albumName):
         newFilesList = []
+        if not os.path.isdir(catalog):
+            print(bcolors.WARNING + "catalog doesn't exist "+ catalog + bcolors.ENDC)
+            return
 
         filesList = [f for f in os.listdir(catalog) if f.endswith(self.mp3ext)]
         filesList.sort()
@@ -363,3 +366,32 @@ class MetadataManager:
             self.showMP3Info(fileNameWithPath)
 
         return filesList
+
+    def setTrackNumber(self, fileNameWithPath, trackNumber):
+        if os.path.isfile(fileNameWithPath):
+            metatag = EasyID3(fileNameWithPath)
+            metatag['tracknumber'] = str(trackNumber)
+            metatag.save()
+            self.showMP3Info(fileNameWithPath)
+        else:
+            warningInfo="ERROR: file %s doesn't exist"%(fileNameWithPath)
+            print (bcolors.FAIL + warningInfo + bcolors.ENDC)
+
+    def setMetadataForSong(self, fileName, title=None, artist=None, album=None, trackNumber=None):
+        if not os.path.isfile(fileName):
+            print(bcolors.WARNING + "file doesn't exist: "+ fileName + bcolors.ENDC)
+            return
+
+        metatag = EasyID3(fileName)
+        if title is not None:
+            metatag['title'] = title
+        if artist is not None:
+            metatag['artist'] = artist
+        if album is not None:
+            metatag['album'] = album
+        if trackNumber is not None:
+            metatag['tracknumber'] = str(trackNumber)
+
+        metatag.save()
+        print(bcolors.OKGREEN + "[ID3] Added metadata" + bcolors.ENDC)
+        self.showMP3Info(fileName)
