@@ -585,5 +585,33 @@ class TestMetadataForSong(TestCase):
 
         shutil.rmtree(os.path.join(currentDirectory,testCatalog))
 
+class TestSetArgumentsForSong(TestCase):
+    def setUp(self):
+        self.metadata_mp3 = metadata_mp3.MetadataManager()
+
+    def test_1(self):
+        originalTestFileName = "test.mp3"
+        testFileName = "test1.mp3"
+        testCatalog = "test_1"
+
+        currentDirectory = os.path.dirname(os.path.realpath(__file__))
+        originalTestFileNameWithPath = os.path.join(currentDirectory,originalTestFileName)
+        testCatalogWithPath = os.path.join(currentDirectory, testCatalog)
+
+        if not os.path.exists(testCatalogWithPath):
+            os.mkdir(testCatalogWithPath)
+        testFileNameWithPath = os.path.join(currentDirectory,testCatalog, testFileName)
+        shutil.copy(originalTestFileNameWithPath, testFileNameWithPath)
+
+        self.metadata_mp3.setMetadataArgumentsForSong(testFileNameWithPath, title="title test", artist="artist test", album="album test", dfdfds="dsfd", tracknumber=5)
+
+        metatag = EasyID3(testFileNameWithPath)
+        self.assertEqual(metatag['title'][0], "title test")
+        self.assertEqual(metatag['artist'][0], "artist test")
+        self.assertEqual(metatag['album'][0], "album test")
+        self.assertEqual(metatag['tracknumber'][0], "5")
+
+        shutil.rmtree(os.path.join(currentDirectory,testCatalog))
+
 if __name__=='__main__':
     unittest.main()

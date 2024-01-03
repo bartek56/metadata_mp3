@@ -395,3 +395,19 @@ class MetadataManager:
         metatag.save()
         print(bcolors.OKGREEN + "[ID3] Added metadata" + bcolors.ENDC)
         self.showMP3Info(fileName)
+
+    def setMetadataArgumentsForSong(self, fileName, **kwargs):
+        if not os.path.isfile(fileName):
+            print(bcolors.WARNING + "file doesn't exist: "+ fileName + bcolors.ENDC)
+            return
+        availablesKeys = EasyID3.valid_keys.keys()
+        availablesKeys = list(availablesKeys)
+        metatag = EasyID3(fileName)
+        for x in kwargs.items():
+            if x[0] in availablesKeys:
+                metatag[x[0]] = str(x[1])
+            else:
+                print(x[0], "is not available parameter")
+        metatag.save()
+        print(bcolors.OKGREEN + "[ID3] Added metadata" + bcolors.ENDC)
+        self.showMP3Info(fileName)
