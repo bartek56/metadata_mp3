@@ -209,7 +209,7 @@ class MetadataManager:
                 return
             metatag = EasyID3(newFileNameWithPath)
             if "artist" in metatag and "title" in metatag and "album" in metatag:
-                if metatag['album'] == albumName and metatag['artist'] == metadataSongName['artist'] and metatag['title'] == metadataSongName['title']:
+                if metatag['album'][0] == albumName and metatag['artist'][0] == metadataSongName['artist'] and metatag['title'][0] == metadataSongName['title']:
                     print(bcolors.OKGREEN + "Metadata is correct. Update is not needed: " + bcolors.ENDC)
                     self.showMP3Info(newFileNameWithPath)
                     return
