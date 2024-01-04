@@ -557,7 +557,7 @@ class TestSetArtist(TestCase):
 
         shutil.rmtree(os.path.join(currentDirectory,testCatalog))
 
-class TestMetadataForSong(TestCase):
+class TestSetMetadata(TestCase):
     def setUp(self):
         self.metadata_mp3 = metadata_mp3.MetadataManager()
 
@@ -575,7 +575,7 @@ class TestMetadataForSong(TestCase):
         testFileNameWithPath = os.path.join(currentDirectory,testCatalog, testFileName)
         shutil.copy(originalTestFileNameWithPath, testFileNameWithPath)
 
-        self.metadata_mp3.setMetadataForSong(testFileNameWithPath, "title test", "artist test", "album test", 5)
+        self.metadata_mp3.setMetadata(testFileNameWithPath, "title test", "artist test", "album test", 5)
 
         metatag = EasyID3(testFileNameWithPath)
         self.assertEqual(metatag['title'][0], "title test")
@@ -585,7 +585,7 @@ class TestMetadataForSong(TestCase):
 
         shutil.rmtree(os.path.join(currentDirectory,testCatalog))
 
-class TestSetArgumentsForSong(TestCase):
+class TestSetMetadataArguments(TestCase):
     def setUp(self):
         self.metadata_mp3 = metadata_mp3.MetadataManager()
 
@@ -603,7 +603,7 @@ class TestSetArgumentsForSong(TestCase):
         testFileNameWithPath = os.path.join(currentDirectory,testCatalog, testFileName)
         shutil.copy(originalTestFileNameWithPath, testFileNameWithPath)
 
-        self.metadata_mp3.setMetadataArgumentsForSong(testFileNameWithPath, title="title test", artist="artist test", album="album test", dfdfds="dsfd", tracknumber=5)
+        self.metadata_mp3.setMetadataArguments(testFileNameWithPath, title="title test", artist="artist test", album="album test", dfdfds="dsfd", tracknumber=5)
 
         metatag = EasyID3(testFileNameWithPath)
         self.assertEqual(metatag['title'][0], "title test")
