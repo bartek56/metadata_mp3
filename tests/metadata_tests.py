@@ -251,6 +251,7 @@ class TestAddMetadataPlaylist(TestCase):
 
     def setUp(self):
         self.metadata_mp3 = metadata_mp3.MetadataManager()
+        self.currentDirectory = os.path.dirname(os.path.realpath(__file__))
 
     def tearDown(self):
         testfileWithPath = os.path.join(self.currentDirectory, self.playlistName)
@@ -373,9 +374,33 @@ class TestAddMetadataPlaylist(TestCase):
 
         self.checkMetadataFromPlaylistFile(newFileNameWithPath)
 
-    def test_artistIsTooLong3(self):
+    def test_artistIsTooLongDuplicates1(self):
         artistTooLong = "aaaaaaaaaa, bbbbbbbbbbb, cccccccccc, dddddddddd, bbbbbbbbbbb, bbbbbbbbbbb, gggggggg, hhhhhh, iiiiiiii, bbbbbbbbbbb"
-        artistTooLongExpected = "aaaaaaaaaa, bbbbbbbbbbb, cccccccccc, dddddddddd, bbbbbbbbbbb, bbbbbbbbbbb"
+        artistTooLongExpected = "aaaaaaaaaa, bbbbbbbbbbb, cccccccccc, dddddddddd, gggggggg, hhhhhh, iiiiiiii"
+        fileNameTitleAndLongArtistTest = "%s - %s.mp3"%(artistTooLongExpected, self.title)
+
+        self.setInputParameters(self.title, artistTooLong, self.fileNameTitleTest)
+        self.setExpectedParameters(self.title, artistTooLongExpected, fileNameTitleAndLongArtistTest)
+
+        newFileNameWithPath = self.renameAndAddMetadataToPlatlistCall()
+
+        self.checkMetadataFromPlaylistFile(newFileNameWithPath)
+
+    def test_artistIsTooLongDuplicates2(self):
+        artistTooLong = "aaaaaaaaaa cccccccccc bbbbbbbbbbb cccccccccc dddddddddd bbbbbbbbbbb bbbbbbbbbbb gggggggg hhhhhh iiiiiiii bbbbbbbbbbb"
+        artistTooLongExpected = "aaaaaaaaaa cccccccccc bbbbbbbbbbb dddddddddd gggggggg hhhhhh iiiiiiii"
+        fileNameTitleAndLongArtistTest = "%s - %s.mp3"%(artistTooLongExpected, self.title)
+
+        self.setInputParameters(self.title, artistTooLong, self.fileNameTitleTest)
+        self.setExpectedParameters(self.title, artistTooLongExpected, fileNameTitleAndLongArtistTest)
+
+        newFileNameWithPath = self.renameAndAddMetadataToPlatlistCall()
+
+        self.checkMetadataFromPlaylistFile(newFileNameWithPath)
+
+    def test_artistIsTooLongDuplicates3(self):
+        artistTooLong = "aa, aa, cccc, bbbb"
+        artistTooLongExpected = "aa, cccc, bbbb"
         fileNameTitleAndLongArtistTest = "%s - %s.mp3"%(artistTooLongExpected, self.title)
 
         self.setInputParameters(self.title, artistTooLong, self.fileNameTitleTest)
@@ -396,6 +421,10 @@ class TestAddMetadataPlaylist(TestCase):
         newFileNameWithPath = self.renameAndAddMetadataToPlatlistCall()
 
         self.checkMetadataFromPlaylistFile(newFileNameWithPath)
+
+    def test_cutShortSongName(self):
+        result = self.metadata_mp3._cutLenght("aaaaaaaaaaaaaaaaaa", 4)
+        self.assertEqual(result, "aaaa")
 
 class TestUpdateMetadataYoutube(TestCase):
     def setUp(self):

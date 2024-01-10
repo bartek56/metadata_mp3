@@ -127,31 +127,49 @@ class MetadataManager:
 
         return metadata
 
+    def _cutLengthAndRemoveDuplicates(self, text:str, maxLength):
+        textWithoutDuplicates = self._removeDuplicates(text)
+
+        if len(textWithoutDuplicates) <= maxLength:
+            return textWithoutDuplicates
+        return self._cutLenght(text, maxLength)
+
     def _cutLenght(self, text:str, maxLength):
         #max filename size is 255
-        originalText = text
+
+        splitSign = self._getSplitSign(text)
+        if splitSign in text:
+            maxLength = maxLength+len(splitSign)
+        textTemp = text[:maxLength]
+
+        temp = textTemp.rsplit(splitSign, 1)
+        return temp[0]
+
+    def _removeDuplicates(self, text):
+        splitSign = self._getSplitSign(text)
+        textSplitted = text.split(splitSign)
+        textSplittedWithoutDuplicates = []
+        for x in textSplitted:
+            if x not in textSplittedWithoutDuplicates:
+                textSplittedWithoutDuplicates.append(x)
+        textWithoutDuplicates = ""
+        for x in textSplittedWithoutDuplicates:
+            textWithoutDuplicates += x + splitSign
+        return textWithoutDuplicates[:-len(splitSign)]
+
+    def _getSplitSign(self, text):
+        splitSign=""
         if ", " in text:
             splitSign = ", "
         else:
             splitSign = " "
-        counter = 0
-        limit = maxLength/4
-        while len(text)>maxLength:
-            temp = text.rsplit(splitSign, 1)
-            text = temp[0]
-            counter+=1
-            # if werid text is here, break loop
-            if counter >= limit:
-                return originalText[0:maxLength]
-        return text
+        return splitSign
 
     def _analyzeAndRenameFilename(self, path, fileName, artist):
         songName = fileName.replace(self.mp3ext, "")
         originalFileNameWithPath = os.path.join(path, fileName)
-        artist = self._cutLenght(artist, self.maxLenghtOfArtist)
+        artist = self._cutLengthAndRemoveDuplicates(artist, self.maxLenghtOfArtist)
         if len(songName) > self.maxLenghtOfTitle:
-            print("too long songname")
-            print(songName)
             songName = self._cutLenght(songName, self.maxLenghtOfTitle)
 
         # any condition has to verify variables: title, artist, newFileName
