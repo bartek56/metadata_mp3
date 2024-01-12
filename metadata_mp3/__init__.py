@@ -138,15 +138,18 @@ class MetadataManager:
         #max filename size is 255
 
         splitSign = self._getSplitSign(text)
-        if splitSign in text:
+        if splitSign is None:
+            return text[:maxLength]
+        else:
             maxLength = maxLength+len(splitSign)
-        textTemp = text[:maxLength]
-
-        temp = textTemp.rsplit(splitSign, 1)
-        return temp[0]
+            textTemp = text[:maxLength]
+            temp = textTemp.rsplit(splitSign, 1)
+            return temp[0]
 
     def _removeDuplicates(self, text):
         splitSign = self._getSplitSign(text)
+        if splitSign is None:
+            return text
         textSplitted = text.split(splitSign)
         textSplittedWithoutDuplicates = []
         for x in textSplitted:
@@ -158,10 +161,10 @@ class MetadataManager:
         return textWithoutDuplicates[:-len(splitSign)]
 
     def _getSplitSign(self, text):
-        splitSign=""
+        splitSign=None
         if ", " in text:
             splitSign = ", "
-        else:
+        elif " " in text:
             splitSign = " "
         return splitSign
 
