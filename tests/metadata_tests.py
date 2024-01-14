@@ -240,9 +240,11 @@ class TestAddMetadataPlaylist(TestCase):
     playlistName = "spokojne-sad"
     title = "Colorblind"
     artist = "Counting Crows"
+    album = "album test"
 
     trackNumber = 1
     artistEmpty = ""
+    albumEmpty=""
 
     fileNameTitleTest = "Colorblind.mp3"
     fileNameTitleAndArtistTest = "Counting Crows - Colorblind.mp3"
@@ -258,9 +260,10 @@ class TestAddMetadataPlaylist(TestCase):
         if os.path.isdir(testfileWithPath):
             shutil.rmtree(testfileWithPath)
 
-    def setInputParameters(self, title, artist, fileName):
+    def setInputParameters(self, title, artist, album, fileName):
         self.titleInput = title
         self.artistInput = artist
+        self.albumInput = album
         self.fileNameInput = fileName
         self.songNameInput = fileName.replace(".mp3", "")
 
@@ -284,31 +287,27 @@ class TestAddMetadataPlaylist(TestCase):
 
         return testFileNameWithPath
 
-    def checkMetadataFromPlaylistFile(self, fileNameWithPath):
+    def checkMetadataFromPlaylistFile(self, fileNameWithPath, artistExist=True, artistAlbumExist=True):
         self.assertTrue(os.path.isfile(fileNameWithPath))
         metatag = EasyID3(fileNameWithPath)
         self.assertIn('title', metatag)
-        self.assertIn('artist', metatag)
+        if artistExist:
+            self.assertIn('artist', metatag)
+        else:
+             self.assertNotIn('artist', metatag)
         self.assertIn('album', metatag)
+        if artistAlbumExist:
+            self.assertIn('albumartist', metatag)
+        else:
+            self.assertNotIn('albumartist', metatag)
         self.assertIn('tracknumber', metatag)
 
         self.assertEqual(metatag['title'][0], self.titleExpected)
-        self.assertEqual(metatag['artist'][0], self.artistExpected)
+        if artistExist:
+            self.assertEqual(metatag['artist'][0], self.artistExpected)
         self.assertEqual(metatag['album'][0], "YT "+ self.playlistName)
-        self.assertEqual(metatag['tracknumber'][0], self.trackNumberStr)
-        self.assertEqual(fileNameWithPath, str(
-            self.currentDirectory+"/"+self.playlistName + "/" +self.fileNameExpected))
-
-    def checkMetadataFromPlaylistFileArtistIsEmpty(self, fileNameWithPath):
-        self.assertTrue(os.path.isfile(fileNameWithPath))
-        metatag = EasyID3(fileNameWithPath)
-        self.assertIn('title', metatag)
-        self.assertNotIn('artist', metatag)
-        self.assertIn('album', metatag)
-        self.assertIn('tracknumber', metatag)
-
-        self.assertEqual(metatag['title'][0], self.titleExpected)
-        self.assertEqual(metatag['album'][0], "YT "+ self.playlistName)
+        if artistAlbumExist:
+            self.assertEqual(metatag['albumartist'][0], self.album)
         self.assertEqual(metatag['tracknumber'][0], self.trackNumberStr)
         self.assertEqual(fileNameWithPath, str(
             self.currentDirectory+"/"+self.playlistName + "/" +self.fileNameExpected))
@@ -316,10 +315,10 @@ class TestAddMetadataPlaylist(TestCase):
     def renameAndAddMetadataToPlatlistCall(self):
         self.renameFile(self.fileNameInput, self.playlistName)
         return self.metadata_mp3.renameAndAddMetadataToPlaylist(
-            self.currentDirectory, 1, self.playlistName, self.artistInput, self.songNameInput)
+            self.currentDirectory, 1, self.playlistName, self.artistInput, self.albumInput, self.songNameInput)
 
     def test_artistIsKnownFromInput(self):
-        self.setInputParameters(self.title, self.artist, self.fileNameTitleTest)
+        self.setInputParameters(self.title, self.artist, self.album, self.fileNameTitleTest)
         self.setExpectedParameters(self.title, self.artist, self.fileNameTitleAndArtistTest)
 
         newFileNameWithPath = self.renameAndAddMetadataToPlatlistCall()
@@ -327,7 +326,7 @@ class TestAddMetadataPlaylist(TestCase):
         self.checkMetadataFromPlaylistFile(newFileNameWithPath)
 
     def test_artistIsKnownFromFileAndFromInput(self):
-        self.setInputParameters(self.title, self.artist, self.fileNameTitleAndArtistTest)
+        self.setInputParameters(self.title, self.artist, self.album, self.fileNameTitleAndArtistTest)
         self.setExpectedParameters(self.title, self.artist, self.fileNameTitleAndArtistTest)
 
         newFileNameWithPath = self.renameAndAddMetadataToPlatlistCall()
@@ -335,7 +334,7 @@ class TestAddMetadataPlaylist(TestCase):
         self.checkMetadataFromPlaylistFile(newFileNameWithPath)
 
     def test_artistIsKnownFromFile(self):
-        self.setInputParameters(self.title, self.artistEmpty, self.fileNameTitleAndArtistTest)
+        self.setInputParameters(self.title, self.artistEmpty, self.album, self.fileNameTitleAndArtistTest)
         self.setExpectedParameters(self.title, self.artist, self.fileNameTitleAndArtistTest)
 
         newFileNameWithPath = self.renameAndAddMetadataToPlatlistCall()
@@ -343,19 +342,19 @@ class TestAddMetadataPlaylist(TestCase):
         self.checkMetadataFromPlaylistFile(newFileNameWithPath)
 
     def test_artistIsNotKnown(self):
-        self.setInputParameters(self.title, self.artistEmpty, self.fileNameTitleTest)
+        self.setInputParameters(self.title, self.artistEmpty, self.album, self.fileNameTitleTest)
         self.setExpectedParameters(self.title, self.artistEmpty, self.fileNameTitleTest)
 
         newFileNameWithPath = self.renameAndAddMetadataToPlatlistCall()
 
-        self.checkMetadataFromPlaylistFileArtistIsEmpty(newFileNameWithPath)
+        self.checkMetadataFromPlaylistFile(newFileNameWithPath, artistExist=False)
 
     def test_artistIsTooLong(self):
         artistTooLong = "aaaaaaaaaa bbbbbbbbbbb cccccccccc dddddddddd eeeeeeeeee fffffffff gggggggg hhhhhh iiiiiiii jjjjjjjj"
         artistTooLongExpected = "aaaaaaaaaa bbbbbbbbbbb cccccccccc dddddddddd eeeeeeeeee fffffffff gggggggg"
         fileNameTitleAndLongArtistTest = "%s - %s.mp3"%(artistTooLongExpected, self.title)
 
-        self.setInputParameters(self.title, artistTooLong, self.fileNameTitleTest)
+        self.setInputParameters(self.title, artistTooLong, self.album, self.fileNameTitleTest)
         self.setExpectedParameters(self.title, artistTooLongExpected, fileNameTitleAndLongArtistTest)
 
         newFileNameWithPath = self.renameAndAddMetadataToPlatlistCall()
@@ -367,7 +366,7 @@ class TestAddMetadataPlaylist(TestCase):
         artistTooLongExpected = "aaaaaaaaaa, bbbbbbbbbbb, cccccccccc, dddddddddd, eeeeeeeeee, fffffffff, gggggggg"
         fileNameTitleAndLongArtistTest = "%s - %s.mp3"%(artistTooLongExpected, self.title)
 
-        self.setInputParameters(self.title, artistTooLong, self.fileNameTitleTest)
+        self.setInputParameters(self.title, artistTooLong, self.album, self.fileNameTitleTest)
         self.setExpectedParameters(self.title, artistTooLongExpected, fileNameTitleAndLongArtistTest)
 
         newFileNameWithPath = self.renameAndAddMetadataToPlatlistCall()
@@ -379,7 +378,7 @@ class TestAddMetadataPlaylist(TestCase):
         artistTooLongExpected = "aaaaaaaaaa, bbbbbbbbbbb, cccccccccc, dddddddddd, gggggggg, hhhhhh, iiiiiiii"
         fileNameTitleAndLongArtistTest = "%s - %s.mp3"%(artistTooLongExpected, self.title)
 
-        self.setInputParameters(self.title, artistTooLong, self.fileNameTitleTest)
+        self.setInputParameters(self.title, artistTooLong, self.album, self.fileNameTitleTest)
         self.setExpectedParameters(self.title, artistTooLongExpected, fileNameTitleAndLongArtistTest)
 
         newFileNameWithPath = self.renameAndAddMetadataToPlatlistCall()
@@ -391,7 +390,7 @@ class TestAddMetadataPlaylist(TestCase):
         artistTooLongExpected = "aaaaaaaaaa cccccccccc bbbbbbbbbbb dddddddddd gggggggg hhhhhh iiiiiiii"
         fileNameTitleAndLongArtistTest = "%s - %s.mp3"%(artistTooLongExpected, self.title)
 
-        self.setInputParameters(self.title, artistTooLong, self.fileNameTitleTest)
+        self.setInputParameters(self.title, artistTooLong, self.album, self.fileNameTitleTest)
         self.setExpectedParameters(self.title, artistTooLongExpected, fileNameTitleAndLongArtistTest)
 
         newFileNameWithPath = self.renameAndAddMetadataToPlatlistCall()
@@ -403,7 +402,7 @@ class TestAddMetadataPlaylist(TestCase):
         artistTooLongExpected = "aa, cccc, bbbb"
         fileNameTitleAndLongArtistTest = "%s - %s.mp3"%(artistTooLongExpected, self.title)
 
-        self.setInputParameters(self.title, artistTooLong, self.fileNameTitleTest)
+        self.setInputParameters(self.title, artistTooLong, self.album, self.fileNameTitleTest)
         self.setExpectedParameters(self.title, artistTooLongExpected, fileNameTitleAndLongArtistTest)
 
         newFileNameWithPath = self.renameAndAddMetadataToPlatlistCall()
@@ -415,7 +414,7 @@ class TestAddMetadataPlaylist(TestCase):
         artistTooLongExpected = "aaaaaaaaaa, bbbbbbbbbbb, cccccccccc, dddddddddd, eeeeeeeeee, fffffffffff"
         fileNameTitleAndLongArtistTest = "%s - %s.mp3"%(artistTooLongExpected, self.title)
 
-        self.setInputParameters(self.title, artistTooLong, self.fileNameTitleTest)
+        self.setInputParameters(self.title, artistTooLong, self.album, self.fileNameTitleTest)
         self.setExpectedParameters(self.title, artistTooLongExpected, fileNameTitleAndLongArtistTest)
 
         newFileNameWithPath = self.renameAndAddMetadataToPlatlistCall()
@@ -425,6 +424,14 @@ class TestAddMetadataPlaylist(TestCase):
     def test_cutShortSongName(self):
         result = self.metadata_mp3._cutLenght("aaaaaaaaaaaaaaaaaa", 4)
         self.assertEqual(result, "aaaa")
+
+    def test_artistalbumIsNotKnown(self):
+        self.setInputParameters(self.title, self.artist, self.albumEmpty, self.fileNameTitleTest)
+        self.setExpectedParameters(self.title, self.artist, self.fileNameTitleAndArtistTest)
+
+        newFileNameWithPath = self.renameAndAddMetadataToPlatlistCall()
+
+        self.checkMetadataFromPlaylistFile(newFileNameWithPath, artistAlbumExist=False)
 
 class TestUpdateMetadataYoutube(TestCase):
     def setUp(self):

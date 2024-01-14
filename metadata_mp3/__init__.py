@@ -40,6 +40,8 @@ class MetadataManager:
 
         unsupportedName = ["Oficial Video HD",
                         "Official Video",
+                        "Video Edit",
+                        "video edit",
                         "official video",
                         "Oficial video",
                         "Oficial Video",
@@ -67,6 +69,7 @@ class MetadataManager:
                         "Official audio",
                         "official audio",
                         "Lyrics",
+                        "Lyric Video",
                             "()","( )","(  )","[]", "[ ]", "[  ]","｜", "⧸" ]
 
         for x in unsupportedName:
@@ -281,10 +284,10 @@ class MetadataManager:
         return newFileNameWithPath
 
     #youtubedl
-    def renameAndAddMetadataToPlaylist(self, PLAYLISTS_PATH, trackNumber, playlistName, artist, songName):
+    def renameAndAddMetadataToPlaylist(self, PLAYLISTS_PATH, trackNumber, playlistName, artist, album, titleSongName):
         path=os.path.join(PLAYLISTS_PATH, playlistName)
         albumName="YT "+playlistName
-        fileName="%s%s"%(songName,self.mp3ext)
+        fileName="%s%s"%(titleSongName,self.mp3ext)
 
         if not os.path.isfile(os.path.join(path, fileName)):
             warningInfo="WARNING: %s not exist"%(fileName)
@@ -305,11 +308,13 @@ class MetadataManager:
 
         newFileNameWithPath = os.path.join(path, newFileName)
         metatag = EasyID3(newFileNameWithPath)
-        metatag['album'] = albumName
         if artist is not None:
             metatag['artist'] = artist
+        if album is not None:
+            metatag['albumartist'] = album
         metatag['title'] = title
         metatag['tracknumber'] = str(trackNumber)
+        metatag['album'] = albumName
         metatag.save()
         print (bcolors.OKGREEN + "[ID3] Added metadata" + bcolors.ENDC)
         self.showMP3Info(newFileNameWithPath)
@@ -472,7 +477,7 @@ class MetadataManager:
         set metadata for song. put argument which one You want update
 
         :param fileName: whole path for file; /home/music/Myslovitz/song.mp3
-        :param kwargs: key and value of parameter to set
+        :param kwargs: key and value of parameter to set, (title, artist, album, artistalbum, tracknumber)
         """
         if not os.path.isfile(fileName):
             print(bcolors.WARNING + "file doesn't exist: "+ fileName + bcolors.ENDC)
