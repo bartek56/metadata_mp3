@@ -236,6 +236,20 @@ class TestAddMetadataSong(TestCase):
 
         self.checkSongMetadataWithoutArtist(self.newFileNameWithPath)
 
+    def test_artistIsTooLong(self):
+
+        artistTooLong = "Alan Walker, Sasha Alex Sloan, Alan Walker, Kasper, Alan Walker, Kristin Carpenter, Rasmus Budny, Fredrik Borch Olsen, Gunnar Greve, Marcus Arnbekk, Mats Lie Skåre, Kristin Carpenter, Rasmus Budny, Fredrik Borch Olsen, Gunnar Greve, Marcus Arnbekk, Mats Lie Skåre"
+        artistTooLongExpected = "Alan Walker, Sasha Alex Sloan, Kasper, Kristin Carpenter, Rasmus Budny"
+
+        fileNameTitleAndLongArtistTest = "%s - %s.mp3"%(artistTooLongExpected, self.title)
+
+        self.setInputParameters(self.title, artistTooLong, self.album, self.fileNameTitleTest)
+        self.setExpectedParameters(self.title, artistTooLongExpected, self.album, fileNameTitleAndLongArtistTest)
+
+        self.renameAndAddMetadataToSongCall()
+
+        self.checkSongMetadata(self.newFileNameWithPath)
+
 class TestAddMetadataPlaylist(TestCase):
     playlistName = "spokojne-sad"
     title = "Colorblind"
@@ -412,6 +426,18 @@ class TestAddMetadataPlaylist(TestCase):
     def test_artistIsTooLong4(self):
         artistTooLong = "aaaaaaaaaa, bbbbbbbbbbb, cccccccccc, dddddddddd, eeeeeeeeee, fffffffffff, ggggggggggg, hhhhhh, iiiiiiii, jjjjjjjj, "
         artistTooLongExpected = "aaaaaaaaaa, bbbbbbbbbbb, cccccccccc, dddddddddd, eeeeeeeeee, fffffffffff"
+        fileNameTitleAndLongArtistTest = "%s - %s.mp3"%(artistTooLongExpected, self.title)
+
+        self.setInputParameters(self.title, artistTooLong, self.album, self.fileNameTitleTest)
+        self.setExpectedParameters(self.title, artistTooLongExpected, fileNameTitleAndLongArtistTest)
+
+        newFileNameWithPath = self.renameAndAddMetadataToPlatlistCall()
+
+        self.checkMetadataFromPlaylistFile(newFileNameWithPath)
+
+    def test_artistIsTooLong5(self):
+        artistTooLong = "Alan Walker, Sasha Alex Sloan, Alan Walker, Kasper, Alan Walker"
+        artistTooLongExpected = "Alan Walker, Sasha Alex Sloan, Kasper"
         fileNameTitleAndLongArtistTest = "%s - %s.mp3"%(artistTooLongExpected, self.title)
 
         self.setInputParameters(self.title, artistTooLong, self.album, self.fileNameTitleTest)

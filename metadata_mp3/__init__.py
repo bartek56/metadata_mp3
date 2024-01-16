@@ -135,7 +135,7 @@ class MetadataManager:
 
         if len(textWithoutDuplicates) <= maxLength:
             return textWithoutDuplicates
-        return self._cutLenght(text, maxLength)
+        return self._cutLenght(textWithoutDuplicates, maxLength)
 
     def _cutLenght(self, text:str, maxLength):
         #max filename size is 255
