@@ -90,7 +90,7 @@ class MetadataManager:
         return songName
 
     def _removeSheetFromFilename(self, path, originalFileName):
-
+        result = originalFileName
         fileNameWithoutExtension = originalFileName.replace(self.mp3ext, "")
 
         fileNameWithoutExtension = self._removeSheetFromSongName(fileNameWithoutExtension)
@@ -98,9 +98,13 @@ class MetadataManager:
 
         originalFileNameWithPath=os.path.join(path, originalFileName)
         fileNameWithPath = os.path.join(path, fileNameWithExtension)
-        os.rename(originalFileNameWithPath, fileNameWithPath)
+        try:
+            os.rename(originalFileNameWithPath, fileNameWithPath)
+            result = fileNameWithExtension
+        except Exception as e:
+            print(bcolors.FAIL + str(e) + bcolors.ENDC)
 
-        return fileNameWithExtension
+        return result
 
     def _convertSongnameOnMetadata(self, songName):
         slots = songName.split(" - ")
@@ -172,6 +176,7 @@ class MetadataManager:
         return splitSign
 
     def _analyzeAndRenameFilename(self, path, fileName, artist):
+        resultFileName = fileName
         songName = fileName.replace(self.mp3ext, "")
         originalFileNameWithPath = os.path.join(path, fileName)
         artist = self._cutLengthAndRemoveDuplicates(artist, self.maxLenghtOfArtist)
@@ -184,10 +189,13 @@ class MetadataManager:
         if not " - " in songName and len(artist)>1:
             newFileName = "%s - %s%s"%(artist, songName, self.mp3ext)
             newFileNameWithPath = os.path.join(path, newFileName)
-            os.rename(originalFileNameWithPath, newFileNameWithPath)
-            fileName=newFileName
+            try:
+                os.rename(originalFileNameWithPath, newFileNameWithPath)
+                resultFileName=newFileName
+            except Exception as e:
+                print(bcolors.FAIL + str(e) + bcolors.ENDC)
             title = songName
-            return FileData(title, artist, newFileName)
+            return FileData(title, artist, resultFileName)
 
         # artist is known from file and from input
         if " - " in songName and len(artist)>1:
@@ -195,8 +203,12 @@ class MetadataManager:
             title = metadataSongName['title']
             newFileName = "%s - %s%s"%(artist, title, self.mp3ext)
             newFileNameWithPath = os.path.join(path, newFileName)
-            os.rename(originalFileNameWithPath, newFileNameWithPath)
-            return FileData(title, artist, newFileName)
+            try:
+                os.rename(originalFileNameWithPath, newFileNameWithPath)
+                resultFileName=newFileName
+            except Exception as e:
+                print(bcolors.FAIL + str(e) + bcolors.ENDC)
+            return FileData(title, artist, resultFileName)
 
         # ----- do not modify filename, because do not have enough information ----
         # get artist from filename, when we do not know artist
