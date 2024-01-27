@@ -285,11 +285,11 @@ class MetadataManager:
 
         newFileNameWithPath = os.path.join(path, newFileName)
         metatag = EasyID3(newFileNameWithPath)
-        if albumName is not None:
+        if albumName is not None and len(albumName) > 0:
             metatag['album'] = albumName
-        if artist is not None:
+        if artist is not None and len(artist) > 0:
             metatag['artist'] = artist
-        if website is not None:
+        if website is not None and len(website) > 0:
             metatag['website'] = website
         metatag['title'] = title
         metatag.save()
@@ -322,11 +322,11 @@ class MetadataManager:
 
         newFileNameWithPath = os.path.join(path, newFileName)
         metatag = EasyID3(newFileNameWithPath)
-        if artist is not None:
+        if artist is not None and len(artist) > 0:
             metatag['artist'] = artist
-        if album is not None:
+        if album is not None and len(album) > 0:
             metatag['albumartist'] = album
-        if website is not None:
+        if website is not None and len(website) > 0:
             metatag['website'] = website
         metatag['title'] = title
         metatag['tracknumber'] = str(trackNumber)

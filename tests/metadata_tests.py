@@ -172,18 +172,22 @@ class TestAddMetadataSong(TestCase):
         self.newFileNameWithPath = self.metadata_mp3.renameAndAddMetadataToSong(self.currentDirectory,
                                                                                 self.albumInput,  self.artistInput, self.songNameInput, self.website)
 
-    def checkSongMetadata(self, fileNameWithPath):
+    def checkSongMetadata(self, fileNameWithPath, website=website):
         self.assertTrue(os.path.isfile(fileNameWithPath))
         metatag = EasyID3(fileNameWithPath)
         self.assertIn('title', metatag)
         self.assertIn('artist', metatag)
         self.assertIn('album', metatag)
-        self.assertIn('website', metatag)
+        if len(website) > 0:
+            self.assertIn('website', metatag)
+        else:
+            self.assertNotIn('website', metatag)
 
         self.assertEqual(metatag['title'][0], self.titleExpected)
         self.assertEqual(metatag['artist'][0], self.artistExpected)
         self.assertEqual(metatag['album'][0], self.albumExpected)
-        self.assertEqual(metatag['website'][0], self.website)
+        if len(website) > 0:
+            self.assertEqual(metatag['website'][0], self.website)
         self.assertEqual(fileNameWithPath, str(
             self.currentDirectory +"/"+ self.fileNameExpected))
 
@@ -214,6 +218,14 @@ class TestAddMetadataSong(TestCase):
         self.renameAndAddMetadataToSongCall()
 
         self.checkSongMetadata(self.newFileNameWithPath)
+
+    def test_websiteIsEmpty(self):
+        self.setInputParameters(self.title, self.artist, self.album, self.fileNameTitleAndArtistTest, '')
+        self.setExpectedParameters(self.title, self.artist, self.album, self.fileNameTitleAndArtistTest)
+
+        self.renameAndAddMetadataToSongCall()
+
+        self.checkSongMetadata(self.newFileNameWithPath,"")
 
     def test_artistIsKnownFromFileAndFromInput_removeSheed(self):
         fileNameTest = "Counting Crows - Colorblind (Official Video).mp3"
