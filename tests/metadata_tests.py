@@ -130,6 +130,7 @@ class TestAddMetadataSong(TestCase):
     artist = "Counting Crows"
     artistEmpty = ""
     album="album"
+    website="abcdefgh"
 
     fileNameTitleTest = "Colorblind.mp3"
     fileNameTitleAndArtistTest = "Counting Crows - Colorblind.mp3"
@@ -152,12 +153,13 @@ class TestAddMetadataSong(TestCase):
         shutil.copy(originalTestFileNameWithPath, testFileNameWithPath)
         return testFileNameWithPath
 
-    def setInputParameters(self, title, artist, album, fileName):
+    def setInputParameters(self, title, artist, album, fileName, website=website):
         self.titleInput = title
         self.artistInput = artist
         self.albumInput = album
         self.fileNameInput = fileName
         self.songNameInput = fileName.replace(".mp3", "")
+        self.website = website
 
     def setExpectedParameters(self, title, artist, album, fileName):
         self.titleExpected = title
@@ -168,7 +170,7 @@ class TestAddMetadataSong(TestCase):
     def renameAndAddMetadataToSongCall(self):
         self.renameFile(self.fileNameInput)
         self.newFileNameWithPath = self.metadata_mp3.renameAndAddMetadataToSong(self.currentDirectory,
-                                                                                self.albumInput,  self.artistInput, self.songNameInput)
+                                                                                self.albumInput,  self.artistInput, self.songNameInput, self.website)
 
     def checkSongMetadata(self, fileNameWithPath):
         self.assertTrue(os.path.isfile(fileNameWithPath))
@@ -176,10 +178,12 @@ class TestAddMetadataSong(TestCase):
         self.assertIn('title', metatag)
         self.assertIn('artist', metatag)
         self.assertIn('album', metatag)
+        self.assertIn('website', metatag)
 
         self.assertEqual(metatag['title'][0], self.titleExpected)
         self.assertEqual(metatag['artist'][0], self.artistExpected)
         self.assertEqual(metatag['album'][0], self.albumExpected)
+        self.assertEqual(metatag['website'][0], self.website)
         self.assertEqual(fileNameWithPath, str(
             self.currentDirectory +"/"+ self.fileNameExpected))
 
@@ -255,6 +259,7 @@ class TestAddMetadataPlaylist(TestCase):
     title = "Colorblind"
     artist = "Counting Crows"
     album = "album test"
+    website = "abcdefghijk"
 
     trackNumber = 1
     artistEmpty = ""
@@ -274,12 +279,13 @@ class TestAddMetadataPlaylist(TestCase):
         if os.path.isdir(testfileWithPath):
             shutil.rmtree(testfileWithPath)
 
-    def setInputParameters(self, title, artist, album, fileName):
+    def setInputParameters(self, title, artist, album, fileName, website=website):
         self.titleInput = title
         self.artistInput = artist
         self.albumInput = album
         self.fileNameInput = fileName
         self.songNameInput = fileName.replace(".mp3", "")
+        self.website = website
 
     def setExpectedParameters(self, title, artist, fileName):
         self.titleExpected = title
@@ -305,6 +311,7 @@ class TestAddMetadataPlaylist(TestCase):
         self.assertTrue(os.path.isfile(fileNameWithPath))
         metatag = EasyID3(fileNameWithPath)
         self.assertIn('title', metatag)
+        self.assertIn('website', metatag)
         if artistExist:
             self.assertIn('artist', metatag)
         else:
@@ -323,13 +330,14 @@ class TestAddMetadataPlaylist(TestCase):
         if artistAlbumExist:
             self.assertEqual(metatag['albumartist'][0], self.album)
         self.assertEqual(metatag['tracknumber'][0], self.trackNumberStr)
+        self.assertEqual(metatag["website"][0], self.website)
         self.assertEqual(fileNameWithPath, str(
             self.currentDirectory+"/"+self.playlistName + "/" +self.fileNameExpected))
 
     def renameAndAddMetadataToPlatlistCall(self):
         self.renameFile(self.fileNameInput, self.playlistName)
         return self.metadata_mp3.renameAndAddMetadataToPlaylist(
-            self.currentDirectory, 1, self.playlistName, self.artistInput, self.albumInput, self.songNameInput)
+            self.currentDirectory, 1, self.playlistName, self.artistInput, self.albumInput, self.songNameInput, self.website)
 
     def test_artistIsKnownFromInput(self):
         self.setInputParameters(self.title, self.artist, self.album, self.fileNameTitleTest)

@@ -259,7 +259,7 @@ class MetadataManager:
             return newFileNameWithPath
 
     #youtubedl
-    def renameAndAddMetadataToSong(self, MUSIC_PATH, albumName, artist, songName):
+    def renameAndAddMetadataToSong(self, MUSIC_PATH, albumName, artist, songName, website):
         path=MUSIC_PATH
 
         fileName="%s%s"%(songName,self.mp3ext)
@@ -289,6 +289,8 @@ class MetadataManager:
             metatag['album'] = albumName
         if artist is not None:
             metatag['artist'] = artist
+        if website is not None:
+            metatag['website'] = website
         metatag['title'] = title
         metatag.save()
         print (bcolors.OKGREEN + "[ID3] Added metadata" + bcolors.ENDC)
@@ -296,7 +298,7 @@ class MetadataManager:
         return newFileNameWithPath
 
     #youtubedl
-    def renameAndAddMetadataToPlaylist(self, PLAYLISTS_PATH, trackNumber, playlistName, artist, album, titleSongName):
+    def renameAndAddMetadataToPlaylist(self, PLAYLISTS_PATH, trackNumber, playlistName, artist, album, titleSongName, website):
         path=os.path.join(PLAYLISTS_PATH, playlistName)
         albumName="YT "+playlistName
         fileName="%s%s"%(titleSongName,self.mp3ext)
@@ -324,6 +326,8 @@ class MetadataManager:
             metatag['artist'] = artist
         if album is not None:
             metatag['albumartist'] = album
+        if website is not None:
+            metatag['website'] = website
         metatag['title'] = title
         metatag['tracknumber'] = str(trackNumber)
         metatag['album'] = albumName
