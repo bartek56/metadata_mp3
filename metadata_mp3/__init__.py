@@ -34,7 +34,31 @@ class MetadataManager:
     def showMP3Info(self, fileNameWithPath):
         print (bcolors.OKGREEN + fileNameWithPath + bcolors.ENDC)
         audio = MP3(fileNameWithPath, ID3=EasyID3)
-        print (audio.pprint())
+        print (audio. pprint())
+
+    def showMP3InfoDir(self, dir):
+        if not os.path.isdir(dir):
+            print("Wrong dir path")
+
+        files = os.listdir(dir)
+        listMp3 = []
+        for file in files:
+            if ".mp3" in file:
+                fullPath = os.path.join(dir, file)
+                audio = EasyID3(fullPath)
+                audioDict = dict(audio)
+                newDict = {}
+                newDict["path"] = fullPath
+                for key, value in audioDict.items():
+                    newDict[key] = value[0]
+
+                listMp3.append(newDict)
+
+        result = sorted(listMp3, key=lambda x: float(x.get("tracknumber",0 )))
+        for x in result:
+            for key, value in x.items():
+                print(key,":",value)
+            print()
 
     def _removeSheetFromSongName(self, songName):
 
@@ -509,3 +533,7 @@ class MetadataManager:
         metatag.save()
         print(bcolors.OKGREEN + "[ID3] Added metadata" + bcolors.ENDC)
         self.showMP3Info(fileName)
+
+if __name__ == "__main__":
+    md = MetadataManager()
+    md.showMP3InfoDir("/tmp/music/test")
