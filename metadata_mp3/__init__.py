@@ -542,7 +542,7 @@ class MetadataManager:
         metatag.save()
         self.showMP3Info(fileNameWithPath)
 
-    def setMetadata(self, fileName, title=None, artist=None, album=None, trackNumber=None, website=None):
+    def setMetadata(self, fileName, title=None, artist=None, album=None, trackNumber=None, website=None, date=None):
         """
         set metadata for song. not all parameters need to be set
 
@@ -572,6 +572,12 @@ class MetadataManager:
             metatag['tracknumber'] = str(trackNumber)
         if website is not None:
             metatag['website'] = website
+        if date is not None:
+            splitted = date.split("-")
+            if len(splitted) == 3:
+                metatag['date'] = date
+            else:
+                print("wrong format of date")
 
         metatag.save()
 
