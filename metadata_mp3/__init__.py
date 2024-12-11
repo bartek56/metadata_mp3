@@ -339,7 +339,7 @@ class MetadataManager:
             return newFileNameWithPath
 
     #youtubedl
-    def renameAndAddMetadataToSong(self, MUSIC_PATH, albumName, artist, songName, website):
+    def renameAndAddMetadataToSong(self, MUSIC_PATH, albumName, artist, songName, website, date=None):
         path=MUSIC_PATH
 
         fileName="%s%s"%(songName,self.mp3ext)
@@ -371,6 +371,8 @@ class MetadataManager:
             metatag['artist'] = artist
         if website is not None and len(website) > 0:
             metatag['website'] = website
+        if date is not None:
+            metatag['date'] = date
         metatag['title'] = title
         metatag.save()
         print (bcolors.OKGREEN + "[ID3] Added metadata" + bcolors.ENDC)
@@ -378,9 +380,9 @@ class MetadataManager:
         return newFileNameWithPath
 
     #youtubedl
-    def renameAndAddMetadataToPlaylist(self, PLAYLISTS_PATH, trackNumber, playlistName, artist, album, titleSongName, website):
+    def renameAndAddMetadataToPlaylist(self, PLAYLISTS_PATH, trackNumber, playlistName, artist, album, titleSongName, website, date=None):
         path=os.path.join(PLAYLISTS_PATH, playlistName)
-        albumName="YT "+playlistName
+        albumPlaylist="YT "+playlistName
         fileName="%s%s"%(titleSongName,self.mp3ext)
 
         if not os.path.isfile(os.path.join(path, fileName)):
@@ -401,9 +403,9 @@ class MetadataManager:
         title = analyzeResult.title
 
         newFileNameWithPath = os.path.join(path, newFileName)
-        return self.addMetadataToPlaylist(newFileNameWithPath, title, artist, album, website,trackNumber, albumName)
+        return self.addMetadataToPlaylist(newFileNameWithPath, title, artist, albumPlaylist, website,trackNumber, album, date)
 
-    def addMetadataToPlaylist(self, fileNameWithPath, title, artist, album, website, trackNumber, albumArtist):
+    def addMetadataToPlaylist(self, fileNameWithPath, title, artist, album, website, trackNumber, albumArtist, date=None):
         metatag = EasyID3(fileNameWithPath)
         if artist is not None and len(artist) > 0:
             metatag['artist'] = artist
@@ -411,6 +413,8 @@ class MetadataManager:
             metatag['albumartist'] = albumArtist
         if website is not None and len(website) > 0:
             metatag['website'] = website
+        if date is not None:
+            metatag['date'] = date
         metatag['title'] = title
         metatag['tracknumber'] = str(trackNumber)
         metatag['album'] = album
