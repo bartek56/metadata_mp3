@@ -557,6 +557,10 @@ class MetadataManager:
             print(bcolors.WARNING + "file doesn't exist: "+ fileName + bcolors.ENDC)
             return
 
+        aktualny_timestamp_dostepu = os.path.getatime(fileName)
+        aktualny_timestamp_modyfikacji = os.path.getmtime(fileName)
+        aktualny_timestamp_stworzenia = os.path.getctime(fileName)
+
         metatag = EasyID3(fileName)
         if title is not None:
             metatag['title'] = title
@@ -570,6 +574,8 @@ class MetadataManager:
             metatag['website'] = website
 
         metatag.save()
+
+        os.utime(fileName, (aktualny_timestamp_dostepu, aktualny_timestamp_modyfikacji))
         print(bcolors.OKGREEN + "[ID3] Added metadata" + bcolors.ENDC)
         self.showMP3Info(fileName)
 
@@ -597,4 +603,5 @@ class MetadataManager:
 
 if __name__ == "__main__":
     md = MetadataManager()
-    md.showMP3InfoDir("/tmp/music/test")
+    #md.showMP3InfoDir("/tmp/music/test")
+    md.getMP3Info("/tmp/music/test2/KBP - 2. Smutny programista.mp3")
