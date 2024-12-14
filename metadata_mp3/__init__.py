@@ -1,6 +1,4 @@
 from __future__ import unicode_literals
-import sys
-import getopt
 import os
 import warnings
 import logging
@@ -25,28 +23,97 @@ class FileData:
         self.artist = artist_
         self.newFileName = newFileName_
 
+class MetadataKeys:
+    TITLE = "title"
+    ARTIST = "artist"
+    ALBUM = "album"
+    ALBUM_ARTIST = "albumartist"
+    TRACK_NUMBER = "tracknumber"
+    WEBSITE = "website"
+    DATE = "date"
+
+class Mp3Info:
+    fileName:str=None
+    title:str=None
+    artist:str=None
+    album:str=None
+    albumArtist:str=None
+    trackNumber:str=None
+    website:str=None
+    date:str=None
+
+    def __init__(self):
+        pass
+
+    def __str__(self):
+        str = ""
+        if self.fileName is not None:
+            str += "fileName: \"" + self.fileName + "\" "
+        if self.title is not None:
+            str += "title: \"" + self.title + "\" "
+        if self.artist is not None:
+            str += "artist: \"" + self.artist + "\" "
+        if self.album is not None:
+            str += "album: \"" + self.album + "\" "
+        if self.albumArtist is not None:
+            str += "albumArtist: \"" + self.albumArtist + "\" "
+        if self.trackNumber is not None:
+            str += "trackNumber: \"" + self.trackNumber + "\" "
+        if self.website is not None:
+            str += "website: \"" + self.website + "\" "
+        if self.date is not None:
+            str += "date: \"" + self.date + "\" "
+
+        return str
+
+    def isOk(self):
+        if (self.fileName is None or
+            self.title is None or
+            self.artist is None or
+            self.album is None or
+            self.albumArtist is None or
+            self.trackNumber is None or
+            self.website is None or
+            self.date is None):
+            return False
+        return True
+
 class MetadataManager:
     def __init__(self):
         self.mp3ext = ".mp3"
         self.maxLenghtOfArtist = 80
         self.maxLenghtOfTitle = 120
 
-    def showMP3Info(self, fileNameWithPath):
+    def showMp3Info(self, fileNameWithPath):
         print (bcolors.OKGREEN + fileNameWithPath + bcolors.ENDC)
         audio = MP3(fileNameWithPath, ID3=EasyID3)
         print (audio. pprint())
 
-    def getMP3Info(self, fileNameWithPath):
-        if not os.path.isfile(fileNameWithPath):
+    def getMp3Info(self, fileNameWithPath):
+        if not os.path.isfile(fileNameWithPath) and ".mp3" not in fileNameWithPath:
             print("file", fileNameWithPath, "doesn't exist")
             return
-        #print (bcolors.OKGREEN + fileNameWithPath + bcolors.ENDC)
         audio = MP3(fileNameWithPath, ID3=EasyID3)
-        #print (audio. pprint())
-        result = {}
+
+        mp3Info = Mp3Info()
         for x in audio.items():
-            result[x[0]] = x[1][0]
-        return result
+            key = x[0]
+            value = x[1][0]
+            if key == MetadataKeys.TITLE:
+                mp3Info.title = value
+            elif key == MetadataKeys.ARTIST:
+                mp3Info.artist = value
+            elif key == MetadataKeys.ALBUM:
+                mp3Info.album = value
+            elif key == MetadataKeys.ALBUM_ARTIST:
+                mp3Info.albumArtist = value
+            elif key == MetadataKeys.TRACK_NUMBER:
+                mp3Info.trackNumber = value
+            elif key == MetadataKeys.DATE:
+                mp3Info.date = value
+            elif key == MetadataKeys.WEBSITE:
+                mp3Info.website = value
+        return mp3Info
 
     def showMP3InfoDir(self, dir):
         if not os.path.isdir(dir):
@@ -57,20 +124,12 @@ class MetadataManager:
         for file in files:
             if ".mp3" in file:
                 fullPath = os.path.join(dir, file)
-                audio = EasyID3(fullPath)
-                audioDict = dict(audio)
-                newDict = {}
-                newDict["path"] = fullPath
-                for key, value in audioDict.items():
-                    newDict[key] = value[0]
+                mp3Info = self.getMp3Info(fullPath)
+                listMp3.append(mp3Info)
 
-                listMp3.append(newDict)
-
-        result = sorted(listMp3, key=lambda x: float(x.get("tracknumber",0 )))
+        result = sorted(listMp3, key=lambda x: float(x.trackNumber))
         for x in result:
-            for key, value in x.items():
-                print(key,":",value)
-            print()
+            print(x)
 
     def _removeSheetFromSongName(self, songName):
 
@@ -212,62 +271,19 @@ class MetadataManager:
         return splitSign
 
     def _analyzeAndRenameFilename(self, path, fileName, artist):
-        resultFileName = fileName
-        songName = fileName.replace(self.mp3ext, "")
+        songName = fileName.replace(".mp3","")
+        result = self._analyzeSongname(songName, artist)
+        if result is None:
+            return
+
         originalFileNameWithPath = os.path.join(path, fileName)
-        artist = self._cutLengthAndRemoveDuplicates(artist, self.maxLenghtOfArtist)
-        if len(songName) > self.maxLenghtOfTitle:
-            songName = self._cutLenght(songName, self.maxLenghtOfTitle)
+        newFileNameWithPath = os.path.join(path, result.newFileName)
+        try:
+            os.rename(originalFileNameWithPath, newFileNameWithPath)
+        except Exception as e:
+            print(bcolors.FAIL + str(e) + bcolors.ENDC)
+        return result
 
-        # any condition has to verify variables: title, artist, newFileName
-        # if songName doesn't contain artist and artist is known
-        # rename filename
-        if not " - " in songName and len(artist)>1:
-            newFileName = "%s - %s%s"%(artist, songName, self.mp3ext)
-            newFileNameWithPath = os.path.join(path, newFileName)
-            try:
-                os.rename(originalFileNameWithPath, newFileNameWithPath)
-                resultFileName=newFileName
-            except Exception as e:
-                print(bcolors.FAIL + str(e) + bcolors.ENDC)
-            title = songName
-            return FileData(title, artist, resultFileName)
-
-        # artist is known from file and from input
-        if " - " in songName and len(artist)>1:
-            metadataSongName = self._convertSongnameOnMetadata(songName)
-            title = metadataSongName['title']
-            newFileName = "%s - %s%s"%(artist, title, self.mp3ext)
-            newFileNameWithPath = os.path.join(path, newFileName)
-            try:
-                os.rename(originalFileNameWithPath, newFileNameWithPath)
-                resultFileName=newFileName
-            except Exception as e:
-                print(bcolors.FAIL + str(e) + bcolors.ENDC)
-            return FileData(title, artist, resultFileName)
-
-        # ----- do not modify filename, because do not have enough information ----
-        # get artist from filename, when we do not know artist
-        if " - " in songName and (artist is None or len(artist)==0):
-            metadataSongName = self._convertSongnameOnMetadata(songName)
-            newFileName = "%s%s"%(songName, self.mp3ext)
-            artist = metadataSongName['artist']
-            title = metadataSongName['title']
-            return FileData(title, artist, newFileName)
-
-        # artist is unknown
-        if not " - " in songName and (artist is None or len(artist)==0):
-            warningInfo="WARNING: artist for song %s is not known"%(songName)
-            print (bcolors.WARNING + warningInfo + bcolors.ENDC)
-            newFileName = "%s%s"%(songName, self.mp3ext)
-            title = songName
-            artist = None
-            return FileData(title, artist, newFileName)
-
-        # something wrong
-        return None
-
-    # TODO a lot of duplicates
     def _analyzeSongname(self, songName, artist):
         artist = self._cutLengthAndRemoveDuplicates(artist, self.maxLenghtOfArtist)
         if len(songName) > self.maxLenghtOfTitle:
@@ -327,7 +343,7 @@ class MetadataManager:
             if "artist" in metatag and "title" in metatag and "album" in metatag:
                 if metatag['album'][0] == albumName and metatag['artist'][0] == metadataSongName['artist'] and metatag['title'][0] == metadataSongName['title']:
                     print(bcolors.OKGREEN + "Metadata is correct. Update is not needed: " + bcolors.ENDC)
-                    self.showMP3Info(newFileNameWithPath)
+                    self.showMp3Info(newFileNameWithPath)
                     return
 
             metatag['album'] = albumName
@@ -335,11 +351,11 @@ class MetadataManager:
             metatag['title'] = metadataSongName['title']
             metatag.save()
             print(bcolors.OKGREEN + "[ID3] Added metadata" + bcolors.ENDC)
-            self.showMP3Info(newFileNameWithPath)
+            self.showMp3Info(newFileNameWithPath)
             return newFileNameWithPath
 
     #youtubedl
-    def renameAndAddMetadataToSong(self, MUSIC_PATH, albumName, artist, songName, website, date=None):
+    def renameAndAddMetadataToSong(self, MUSIC_PATH, albumName, artist, songName, website, date):
         path=MUSIC_PATH
 
         fileName="%s%s"%(songName,self.mp3ext)
@@ -366,17 +382,17 @@ class MetadataManager:
         newFileNameWithPath = os.path.join(path, newFileName)
         metatag = EasyID3(newFileNameWithPath)
         if albumName is not None and len(albumName) > 0:
-            metatag['album'] = albumName
+            metatag[MetadataKeys.ALBUM] = albumName
         if artist is not None and len(artist) > 0:
-            metatag['artist'] = artist
+            metatag[MetadataKeys.ARTIST] = artist
         if website is not None and len(website) > 0:
-            metatag['website'] = website
-        if date is not None:
-            metatag['date'] = date
-        metatag['title'] = title
+            metatag[MetadataKeys.WEBSITE] = website
+        if date is not None and len(date) > 0:
+            metatag[MetadataKeys.DATE] = date
+        metatag[MetadataKeys.TITLE] = title
         metatag.save()
         print (bcolors.OKGREEN + "[ID3] Added metadata" + bcolors.ENDC)
-        self.showMP3Info(newFileNameWithPath)
+        self.showMp3Info(newFileNameWithPath)
         return newFileNameWithPath
 
     #youtubedl
@@ -408,19 +424,19 @@ class MetadataManager:
     def addMetadataToPlaylist(self, fileNameWithPath, title, artist, album, website, trackNumber, albumArtist, date=None):
         metatag = EasyID3(fileNameWithPath)
         if artist is not None and len(artist) > 0:
-            metatag['artist'] = artist
+            metatag[MetadataKeys.ARTIST] = artist
         if albumArtist is not None and len(albumArtist) > 0:
-            metatag['albumartist'] = albumArtist
+            metatag[MetadataKeys.ALBUM_ARTIST] = albumArtist
         if website is not None and len(website) > 0:
-            metatag['website'] = website
+            metatag[MetadataKeys.WEBSITE] = website
         if date is not None:
-            metatag['date'] = date
-        metatag['title'] = title
-        metatag['tracknumber'] = str(trackNumber)
-        metatag['album'] = album
+            metatag[MetadataKeys.DATE] = date
+        metatag[MetadataKeys.TITLE] = title
+        metatag[MetadataKeys.TRACK_NUMBER] = str(trackNumber)
+        metatag[MetadataKeys.ALBUM] = album
         metatag.save()
         print (bcolors.OKGREEN + "[ID3] Added metadata" + bcolors.ENDC)
-        self.showMP3Info(fileNameWithPath)
+        self.showMp3Info(fileNameWithPath)
         return fileNameWithPath
 
     #youtubedl
@@ -505,9 +521,9 @@ class MetadataManager:
         for fileName in filesList:
             fileNameWithPath = os.path.join(catalog, fileName)
             metatag = EasyID3(fileNameWithPath)
-            metatag['album'] = albumName
+            metatag[MetadataKeys.ALBUM] = albumName
             metatag.save()
-            self.showMP3Info(fileNameWithPath)
+            self.showMp3Info(fileNameWithPath)
 
         return filesList
 
@@ -524,9 +540,9 @@ class MetadataManager:
         for fileName in filesList:
             fileNameWithPath = os.path.join(catalog, fileName)
             metatag = EasyID3(fileNameWithPath)
-            metatag['artist'] = artistName
+            metatag[MetadataKeys.ARTIST] = artistName
             metatag.save()
-            self.showMP3Info(fileNameWithPath)
+            self.showMp3Info(fileNameWithPath)
 
         return filesList
 
@@ -542,9 +558,9 @@ class MetadataManager:
             print (bcolors.FAIL + warningInfo + bcolors.ENDC)
             return
         metatag = EasyID3(fileNameWithPath)
-        metatag['tracknumber'] = str(trackNumber)
+        metatag[MetadataKeys.TRACK_NUMBER] = str(trackNumber)
         metatag.save()
-        self.showMP3Info(fileNameWithPath)
+        self.showMp3Info(fileNameWithPath)
 
     def setMetadata(self, fileName, title=None, artist=None, album=None, trackNumber=None, website=None, date=None):
         """
@@ -567,19 +583,19 @@ class MetadataManager:
 
         metatag = EasyID3(fileName)
         if title is not None:
-            metatag['title'] = title
+            metatag[MetadataKeys.TITLE] = title
         if artist is not None:
-            metatag['artist'] = artist
+            metatag[MetadataKeys.ARTIST] = artist
         if album is not None:
-            metatag['album'] = album
+            metatag[MetadataKeys.ALBUM] = album
         if trackNumber is not None:
-            metatag['tracknumber'] = str(trackNumber)
+            metatag[MetadataKeys.TRACK_NUMBER] = str(trackNumber)
         if website is not None:
-            metatag['website'] = website
+            metatag[MetadataKeys.WEBSITE] = website
         if date is not None:
             splitted = date.split("-")
             if len(splitted) == 3:
-                metatag['date'] = date
+                metatag[MetadataKeys.DATE] = date
             else:
                 print("wrong format of date")
 
@@ -587,7 +603,7 @@ class MetadataManager:
 
         os.utime(fileName, (aktualny_timestamp_dostepu, aktualny_timestamp_modyfikacji))
         print(bcolors.OKGREEN + "[ID3] Added metadata" + bcolors.ENDC)
-        self.showMP3Info(fileName)
+        self.showMp3Info(fileName)
 
     def setMetadataArguments(self, fileName, **kwargs):
         """
@@ -609,9 +625,10 @@ class MetadataManager:
                 print(x[0], "is not available parameter")
         metatag.save()
         print(bcolors.OKGREEN + "[ID3] Added metadata" + bcolors.ENDC)
-        self.showMP3Info(fileName)
+        self.showMp3Info(fileName)
 
 if __name__ == "__main__":
     md = MetadataManager()
-    #md.showMP3InfoDir("/tmp/music/test")
-    md.getMP3Info("/tmp/music/test2/KBP - 2. Smutny programista.mp3")
+    md.showMP3InfoDir("/tmp/music/test2")
+    info = md.getMp3Info("/tmp/music/test2/KBP - 2. Smutny programista.mp3")
+    print(info)
