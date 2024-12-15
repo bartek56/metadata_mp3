@@ -115,19 +115,22 @@ class MetadataManager:
                 mp3Info.website = value
         return mp3Info
 
-    def showMP3InfoDir(self, dir):
+    def showMp3InfoDir(self, dir):
         if not os.path.isdir(dir):
             print("Wrong dir path")
 
         files = os.listdir(dir)
         listMp3 = []
+        isTrackNumber = True
         for file in files:
             if ".mp3" in file:
                 fullPath = os.path.join(dir, file)
                 mp3Info = self.getMp3Info(fullPath)
+                if mp3Info.trackNumber is None:
+                    isTrackNumber = False
                 listMp3.append(mp3Info)
-
-        result = sorted(listMp3, key=lambda x: float(x.trackNumber))
+        if isTrackNumber:
+            result = sorted(listMp3, key=lambda x: float(x.trackNumber))
         for x in result:
             print(x)
 
@@ -629,6 +632,6 @@ class MetadataManager:
 
 if __name__ == "__main__":
     md = MetadataManager()
-    md.showMP3InfoDir("/tmp/music/test2")
+    md.showMp3InfoDir("/tmp/music/test2")
     info = md.getMp3Info("/tmp/music/test2/KBP - 2. Smutny programista.mp3")
     print(info)
