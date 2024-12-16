@@ -79,12 +79,14 @@ class Mp3Info:
         return True
 
 class MetadataManager:
+    fileName=""
     def __init__(self):
         self.mp3ext = ".mp3"
         self.maxLenghtOfArtist = 80
         self.maxLenghtOfTitle = 120
 
     def showMp3Info(self, fileNameWithPath):
+        self.fileName = fileNameWithPath
         print (bcolors.OKGREEN + fileNameWithPath + bcolors.ENDC)
         audio = MP3(fileNameWithPath, ID3=EasyID3)
         print (audio. pprint())
@@ -565,7 +567,7 @@ class MetadataManager:
         metatag.save()
         self.showMp3Info(fileNameWithPath)
 
-    def setMetadata(self, fileName, title=None, artist=None, album=None, trackNumber=None, website=None, date=None):
+    def setMetadata(self, fileName=None, title=None, artist=None, album=None, trackNumber=None, website=None, date=None):
         """
         set metadata for song. not all parameters need to be set
 
@@ -575,6 +577,10 @@ class MetadataManager:
         :param album: album
         :param trackNumber: number of track
         """
+        if fileName == None:
+            fileName = self.fileName
+        else:
+            self.fileName = fileName
 
         if not os.path.isfile(fileName):
             print(bcolors.WARNING + "file doesn't exist: "+ fileName + bcolors.ENDC)
