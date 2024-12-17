@@ -614,6 +614,19 @@ class MetadataManager:
         print(bcolors.OKGREEN + "[ID3] Added metadata" + bcolors.ENDC)
         self.showMp3Info(fileName)
 
+    def setMetadataMp3Info(self, flileName, data:Mp3Info):
+        """
+        set metadata for song. not all parameters need to be set
+
+        :param fileName: whole path for file; /home/music/Myslovitz/song.mp3
+        :param title: title
+        :param artist: artist
+        :param album: album
+        :param trackNumber: number of track
+        """
+        self.setMetadata(flileName,title=data.title, artist=data.artist, album=data.album, trackNumber=data.trackNumber, website=data.website, date=data.date)
+
+
     def setMetadataArguments(self, fileName, **kwargs):
         """
         set metadata for song. put argument which one You want update
