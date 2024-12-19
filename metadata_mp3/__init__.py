@@ -42,8 +42,17 @@ class Mp3Info:
     website:str=None
     date:str=None
 
-    def __init__(self):
-        pass
+    def __init__(self, _fileName:str=None, _title:str=None, _artist:str=None,
+                 _album:str=None, _albumArtist:str=None, _trackNumber:str=None,
+                 _website:str=None, _date:str=None):
+        self.fileName = _fileName
+        self.title = _title
+        self.artist = _artist
+        self.album = _album
+        self.albumArtist = _albumArtist
+        self.trackNumber = _trackNumber
+        self.website = _website
+        self.date = _date
 
     def __str__(self):
         str = ""
