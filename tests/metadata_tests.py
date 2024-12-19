@@ -220,6 +220,23 @@ class TestAddMetadataSong(TestCase):
 
         self.checkSongMetadata(self.newFileNameWithPath)
 
+    def test_artistIsKnownFromInput_fileExist(self):
+        self.setInputParameters(self.title, self.artist, self.album, self.fileNameTitleTest)
+        self.setExpectedParameters(self.title, self.artist, self.album, self.fileNameTitleAndArtistTest)
+
+        self.renameAndAddMetadataToSongCall()
+        oldFileNameWithPath = self.newFileNameWithPath
+        self.checkSongMetadata(self.newFileNameWithPath)
+
+        self.renameAndAddMetadataToSongCall()
+
+
+        self.fileNameExpected = self.fileNameExpected.replace(".mp3", " (1).mp3")
+        self.checkSongMetadata(self.newFileNameWithPath)
+
+        # TODO
+        os.remove(oldFileNameWithPath)
+
     def test_artistIsKnownFromFileAndFromInput(self):
         self.setInputParameters(self.title, self.artist, self.album, self.fileNameTitleAndArtistTest)
         self.setExpectedParameters(self.title, self.artist, self.album, self.fileNameTitleAndArtistTest)
@@ -372,6 +389,15 @@ class TestAddMetadataPlaylist(TestCase):
     def test_artistIsKnownFromInput(self):
         self.setInputParameters(self.title, self.artist, self.album, self.fileNameTitleTest)
         self.setExpectedParameters(self.title, self.artist, self.fileNameTitleAndArtistTest)
+
+        newFileNameWithPath = self.renameAndAddMetadataToPlatlistCall()
+
+        self.checkMetadataFromPlaylistFile(newFileNameWithPath)
+
+    def test_artistIsKnownFromFileAndFromInputRemoveSheet(self):
+        fileNameTest = str(self.artist + " - " + self.title + " (Official Video).mp3")
+        self.setInputParameters(self.title, self.artist, self.album, fileNameTest)
+        self.setExpectedParameters(self.title, self.artist, str(self.artist + " - " + self.title+".mp3"))
 
         newFileNameWithPath = self.renameAndAddMetadataToPlatlistCall()
 
