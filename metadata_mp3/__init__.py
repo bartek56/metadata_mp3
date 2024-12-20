@@ -405,12 +405,18 @@ class MetadataManager:
             return
 
         songName = self._removeSheetFromSongName(songName)
-        analyzeResult = self._analyzeSongname(songName,artist)
+        analyzeResult = self._analyzeSongname(songName, artist)
 
         if analyzeResult is None:
             warningInfo="ERROR: Unknown situation with songName"
             print (bcolors.FAIL + warningInfo + bcolors.ENDC)
             return
+# TODO when artist doesn't exist filename was not changed, so yt can override this file
+#        originalSongName = songName
+#        if originalSongName == analyzeResult.newFileName.replace(".mp3",""):
+#            warningInfo="WARNING: Title was not changed. New number was added to fileName"
+#            print (bcolors.WARNING + warningInfo + bcolors.ENDC)
+#            analyzeResult.newFileName = analyzeResult.newFileName.replace(".mp3", " (1).mp3")
 
         newFileName = self._renameFile(path, fileName, analyzeResult.newFileName)
 

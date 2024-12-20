@@ -137,20 +137,26 @@ class TestAddMetadataSong(TestCase):
     fileNameTitleAndArtistTest = "Counting Crows - Colorblind.mp3"
     songNameTitleAndArtistTest = "Counting Crows - Colorblind"
 
+    testSubDir = "testsDirectory"
+
     def setUp(self):
         self.metadata_mp3 = metadata_mp3.MetadataManager()
 
     def tearDown(self):
-        testfileWithPath = os.path.join(self.currentDirectory, self.newFileNameWithPath)
-        if os.path.isfile(testfileWithPath):
-            os.remove(testfileWithPath)
+        testfilesDir = os.path.join(self.currentDirectory, self.testSubDir)
+        if os.path.isdir(testfilesDir):
+            shutil.rmtree(testfilesDir)
 
     def renameFile(self, testFileName):
         originalTestFileName = "test.mp3"
 
         self.currentDirectory = os.path.dirname(os.path.realpath(__file__))
-        originalTestFileNameWithPath = os.path.join(self.currentDirectory,originalTestFileName)
-        testFileNameWithPath = os.path.join(self.currentDirectory, testFileName)
+        self.testDirectory = os.path.join(self.currentDirectory, self.testSubDir)
+        os.makedirs(self.testDirectory, exist_ok=True)
+
+        originalTestFileNameWithPath = os.path.join(self.currentDirectory, originalTestFileName)
+        testFileNameWithPath = os.path.join(self.testDirectory, testFileName)
+
         shutil.copy(originalTestFileNameWithPath, testFileNameWithPath)
         return testFileNameWithPath
 
@@ -171,7 +177,7 @@ class TestAddMetadataSong(TestCase):
 
     def renameAndAddMetadataToSongCall(self):
         self.renameFile(self.fileNameInput)
-        self.newFileNameWithPath = self.metadata_mp3.renameAndAddMetadataToSong(self.currentDirectory,
+        self.newFileNameWithPath = self.metadata_mp3.renameAndAddMetadataToSong(self.testDirectory,
                                                                                 self.albumInput,  self.artistInput, self.songNameInput, self.website, self.date)
 
     def checkSongMetadata(self, fileNameWithPath, isWebsite=True, isDate=True):
@@ -198,7 +204,7 @@ class TestAddMetadataSong(TestCase):
         if isDate:
             self.assertEqual(metatag['date'][0], self.date)
         self.assertEqual(fileNameWithPath, str(
-            self.currentDirectory +"/"+ self.fileNameExpected))
+            self.testDirectory +"/"+ self.fileNameExpected))
 
     def checkSongMetadataWithoutArtist(self, fileNameWithPath):
         self.assertTrue(os.path.isfile(fileNameWithPath))
@@ -210,7 +216,7 @@ class TestAddMetadataSong(TestCase):
         self.assertEqual(metatag['title'][0], self.titleExpected)
         self.assertEqual(metatag['album'][0], self.albumExpected)
         self.assertEqual(fileNameWithPath, str(
-            self.currentDirectory +"/"+ self.fileNameExpected))
+            self.testDirectory +"/"+ self.fileNameExpected))
 
     def test_artistIsKnownFromInput(self):
         self.setInputParameters(self.title, self.artist, self.album, self.fileNameTitleTest)
@@ -225,17 +231,57 @@ class TestAddMetadataSong(TestCase):
         self.setExpectedParameters(self.title, self.artist, self.album, self.fileNameTitleAndArtistTest)
 
         self.renameAndAddMetadataToSongCall()
-        oldFileNameWithPath = self.newFileNameWithPath
         self.checkSongMetadata(self.newFileNameWithPath)
 
         self.renameAndAddMetadataToSongCall()
-
-
         self.fileNameExpected = self.fileNameExpected.replace(".mp3", " (1).mp3")
         self.checkSongMetadata(self.newFileNameWithPath)
 
-        # TODO
-        os.remove(oldFileNameWithPath)
+    def test_artistIsKnownFromInput_fileExistTwoTimes(self):
+        self.setInputParameters(self.title, self.artist, self.album, self.fileNameTitleTest)
+        self.setExpectedParameters(self.title, self.artist, self.album, self.fileNameTitleAndArtistTest)
+
+        self.renameAndAddMetadataToSongCall()
+        self.checkSongMetadata(self.newFileNameWithPath)
+
+        self.renameAndAddMetadataToSongCall()
+        self.fileNameExpected = self.fileNameExpected.replace(".mp3", " (1).mp3")
+        self.checkSongMetadata(self.newFileNameWithPath)
+
+        self.renameAndAddMetadataToSongCall()
+        self.fileNameExpected = self.fileNameExpected.replace(" (1).mp3", " (2).mp3")
+        self.checkSongMetadata(self.newFileNameWithPath)
+
+    def test_artistIsKnownFromInput_fileExistSixTimes(self):
+        self.setInputParameters(self.title, self.artist, self.album, self.fileNameTitleTest)
+        self.setExpectedParameters(self.title, self.artist, self.album, self.fileNameTitleAndArtistTest)
+
+        self.renameAndAddMetadataToSongCall()
+        self.checkSongMetadata(self.newFileNameWithPath)
+
+        self.renameAndAddMetadataToSongCall()
+        self.fileNameExpected = self.fileNameExpected.replace(".mp3", " (1).mp3")
+        self.checkSongMetadata(self.newFileNameWithPath)
+
+        self.renameAndAddMetadataToSongCall()
+        self.fileNameExpected = self.fileNameExpected.replace(" (1).mp3", " (2).mp3")
+        self.checkSongMetadata(self.newFileNameWithPath)
+
+        self.renameAndAddMetadataToSongCall()
+        self.fileNameExpected = self.fileNameExpected.replace(" (2).mp3", " (3).mp3")
+        self.checkSongMetadata(self.newFileNameWithPath)
+
+        self.renameAndAddMetadataToSongCall()
+        self.fileNameExpected = self.fileNameExpected.replace(" (3).mp3", " (4).mp3")
+        self.checkSongMetadata(self.newFileNameWithPath)
+
+        self.renameAndAddMetadataToSongCall()
+        self.fileNameExpected = self.fileNameExpected.replace(" (4).mp3", " (5).mp3")
+        self.checkSongMetadata(self.newFileNameWithPath)
+
+        self.renameAndAddMetadataToSongCall()
+        self.fileNameExpected = self.title + ".mp3"
+        self.checkSongMetadata(self.newFileNameWithPath)
 
     def test_artistIsKnownFromFileAndFromInput(self):
         self.setInputParameters(self.title, self.artist, self.album, self.fileNameTitleAndArtistTest)
