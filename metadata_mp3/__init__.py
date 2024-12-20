@@ -436,20 +436,17 @@ class MetadataManager:
             print (bcolors.WARNING + warningInfo + bcolors.ENDC)
             return
 
-        #rename song file to remove useless text
-        fileName = self._removeSheetFromFilename(path, fileName)
-        analyzeResult = self._analyzeAndRenameFilename(path, fileName, artist)
+        songName = self._removeSheetFromSongName(titleSongName)
+        analyzeResult = self._analyzeSongname(songName, artist)
         if analyzeResult is None:
             warningInfo="ERROR: Unknown situation with fileName"
             print (bcolors.FAIL + warningInfo + bcolors.ENDC)
             return
 
-        newFileName = analyzeResult.newFileName
-        artist = analyzeResult.artist
-        title = analyzeResult.title
+        newFileName = self._renameFile(path, fileName, analyzeResult.newFileName)
 
         newFileNameWithPath = os.path.join(path, newFileName)
-        return self._addMetadata(newFileNameWithPath, title, artist, albumPlaylist, album, website, trackNumber, date)
+        return self._addMetadata(newFileNameWithPath, analyzeResult.title, analyzeResult.artist, albumPlaylist, album, website, trackNumber, date)
 
     def _addMetadata(self, fileNameWithPath, title, artist=None, album=None, albumArtist=None, website=None, trackNumber=None, date=None):
         metatag = EasyID3(fileNameWithPath)
