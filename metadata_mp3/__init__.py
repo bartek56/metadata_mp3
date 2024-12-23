@@ -165,6 +165,7 @@ class MetadataManager:
                         "Oficjalne Wideo",
                         "oficjalne Wideo",
                         "Official Video HD",
+                        "Official HD Video",
                         "Official Video HQ",
                         "Official Music Video",
                         "Official Lyric Video",
@@ -393,10 +394,10 @@ class MetadataManager:
             return newFileNameWithPath
 
     #youtubedl
-    def renameAndAddMetadataToSong(self, MUSIC_PATH, albumName, artist, songName, website, date):
+    def renameAndAddMetadataToSong(self, MUSIC_PATH, fileName,
+                                   title, artist, albumName, website, date):
         path=MUSIC_PATH
 
-        fileName="%s%s"%(songName,self.mp3ext)
         oldFileNameWithPath = os.path.join(path, fileName)
 
         if not os.path.isfile(oldFileNameWithPath):
@@ -404,19 +405,13 @@ class MetadataManager:
             print (bcolors.WARNING + warningInfo + bcolors.ENDC)
             return
 
-        songName = self._removeSheetFromSongName(songName)
+        songName = self._removeSheetFromSongName(title)
         analyzeResult = self._analyzeSongname(songName, artist)
 
         if analyzeResult is None:
             warningInfo="ERROR: Unknown situation with songName"
             print (bcolors.FAIL + warningInfo + bcolors.ENDC)
             return
-# TODO when artist doesn't exist filename was not changed, so yt can override this file
-#        originalSongName = songName
-#        if originalSongName == analyzeResult.newFileName.replace(".mp3",""):
-#            warningInfo="WARNING: Title was not changed. New number was added to fileName"
-#            print (bcolors.WARNING + warningInfo + bcolors.ENDC)
-#            analyzeResult.newFileName = analyzeResult.newFileName.replace(".mp3", " (1).mp3")
 
         newFileName = self._renameFile(path, fileName, analyzeResult.newFileName)
 
@@ -426,17 +421,17 @@ class MetadataManager:
         return newFileNameWithPath
 
     #youtubedl
-    def renameAndAddMetadataToPlaylist(self, PLAYLISTS_PATH, trackNumber, playlistName, artist, album, titleSongName, website, date=None):
+    def renameAndAddMetadataToPlaylist(self, PLAYLISTS_PATH, playlistName, fileName,
+                                       trackNumber, title, artist, album, website, date):
         path=os.path.join(PLAYLISTS_PATH, playlistName)
         albumPlaylist="YT "+playlistName
-        fileName="%s%s"%(titleSongName,self.mp3ext)
 
         if not os.path.isfile(os.path.join(path, fileName)):
             warningInfo="WARNING: %s not exist"%(fileName)
             print (bcolors.WARNING + warningInfo + bcolors.ENDC)
             return
 
-        songName = self._removeSheetFromSongName(titleSongName)
+        songName = self._removeSheetFromSongName(title)
         analyzeResult = self._analyzeSongname(songName, artist)
         if analyzeResult is None:
             warningInfo="ERROR: Unknown situation with fileName"
