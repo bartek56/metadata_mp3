@@ -228,8 +228,13 @@ class MetadataManager:
             i=1
             while not (i>5 or not os.path.isfile(fileNameWithPath)):
                 newFilenameWithNumber = newFilename.replace(".mp3", " (%s).mp3"%(i))
-                fileNameWithPath=os.path.join(path,newFilenameWithNumber)
+                fileNameWithPath=os.path.join(path, newFilenameWithNumber)
+                if fileNameWithPath == originalFileNameWithPath:
+                    warningInfo="WARNING: src is equal to dst. rename is not needed: %s "%(oldFilename)
+                    print (bcolors.WARNING + warningInfo + bcolors.ENDC)
+                    return oldFilename
                 i+=1
+
             newFilename = newFilenameWithNumber
 
         if os.path.isfile(fileNameWithPath):
