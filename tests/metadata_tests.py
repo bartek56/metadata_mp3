@@ -570,53 +570,6 @@ class TestAddMetadataPlaylist(TestCase):
 
         self.checkMetadataFromPlaylistFile(newFileNameWithPath, artistAlbumExist=False)
 
-class TestUpdateMetadataYoutube(TestCase):
-    def setUp(self):
-        self.metadata_mp3 = metadata_mp3.MetadataManager()
-
-    def test_1(self):
-        originalTestFileName = "test.mp3"
-        testFileName1 = "Counting Crows - Colorblind.mp3"
-        testFileName2 = "Eels - I Need Some Sleep.mp3"
-        testFileName3 = "Paramore - The Only Exception.mp3"
-        artistTestList = []
-        artistTestList.append("Counting Crows")
-        titleTestList = []
-        titleTestList.append("Colorblind")
-        artistTestList.append("Eels")
-        titleTestList.append("I Need Some Sleep")
-        artistTestList.append("Paramore")
-        titleTestList.append("The Only Exception")
-        albumTest = "spokojne-sad"
-
-        currentDirectory = os.path.dirname(os.path.realpath(__file__))
-        originalTestFileNameWithPath = os.path.join(currentDirectory,originalTestFileName)
-        albumDirectory = os.path.join(currentDirectory,albumTest)
-
-
-        if not os.path.exists(albumDirectory):
-            os.mkdir(albumDirectory)
-        testFileNameWithPath = os.path.join(currentDirectory,albumTest, testFileName1)
-        shutil.copy(originalTestFileNameWithPath, testFileNameWithPath)
-        testFileNameWithPath = os.path.join(currentDirectory,albumTest, testFileName2)
-        shutil.copy(originalTestFileNameWithPath, testFileNameWithPath)
-        testFileNameWithPath = os.path.join(currentDirectory,albumTest, testFileName3)
-        shutil.copy(originalTestFileNameWithPath, testFileNameWithPath)
-
-        newFilesList = self.metadata_mp3.updateMetadataYoutube(currentDirectory,albumTest)
-        i = 0
-        for newFile in newFilesList:
-            self.assertTrue(os.path.isfile(newFile))
-            metatag = EasyID3(newFile)
-
-            self.assertEqual(metatag['artist'][0], artistTestList[i])
-            self.assertEqual(metatag['title'][0], titleTestList[i])
-            self.assertEqual(metatag['album'][0], "YT "+albumTest)
-
-            i = i+1
-
-        shutil.rmtree(os.path.join(currentDirectory,albumTest))
-
 class TestUpdateMetadata(TestCase):
 
     def setUp(self):
@@ -736,7 +689,7 @@ class TestSetAlbum(TestCase):
         testFileNameWithPath = os.path.join(currentDirectory,testCatalog, testFileName2)
         shutil.copy(originalTestFileNameWithPath, testFileNameWithPath)
 
-        newFilesList = self.metadata_mp3.setAlbum(testCatalogWithPath, "album test")
+        newFilesList = self.metadata_mp3.setAlbumDir(testCatalogWithPath, "album test")
         for newFile in newFilesList:
             newFileWithPath = os.path.join(testCatalogWithPath,newFile)
             self.assertTrue(os.path.isfile(newFileWithPath))
@@ -768,7 +721,7 @@ class TestSetArtist(TestCase):
         testFileNameWithPath = os.path.join(currentDirectory,testCatalog, testFileName2)
         shutil.copy(originalTestFileNameWithPath, testFileNameWithPath)
 
-        newFilesList = self.metadata_mp3.setArtist(testCatalogWithPath, "artist test")
+        newFilesList = self.metadata_mp3.setArtistDir(testCatalogWithPath, "artist test")
         for newFile in newFilesList:
             newFileWithPath = os.path.join(testCatalogWithPath,newFile)
             self.assertTrue(os.path.isfile(newFileWithPath))

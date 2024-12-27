@@ -145,6 +145,275 @@ class MetadataManager:
         for x in result:
             print(x)
 
+    def setMetadata(self, fileName=None, title=None, artist=None, album=None, trackNumber=None, website=None, date=None):
+        """
+        set metadata for song. not all parameters need to be set
+
+        :param fileName: whole path for file; /home/music/Myslovitz/song.mp3
+        :param title: title
+        :param artist: artist
+        :param album: album
+        :param trackNumber: number of track
+        """
+        if fileName == None:
+            fileName = self.fileName
+        else:
+            self.fileName = fileName
+
+        if not os.path.isfile(fileName):
+            print(bcolors.WARNING + "file doesn't exist: "+ fileName + bcolors.ENDC)
+            return
+
+        aktualny_timestamp_dostepu = os.path.getatime(fileName)
+        aktualny_timestamp_modyfikacji = os.path.getmtime(fileName)
+        #aktualny_timestamp_stworzenia = os.path.getctime(fileName)
+
+        self._addMetadata(fileName, title, artist, album, None, website, trackNumber, date)
+
+        os.utime(fileName, (aktualny_timestamp_dostepu, aktualny_timestamp_modyfikacji))
+        print(bcolors.OKGREEN + "[ID3] Added metadata" + bcolors.ENDC)
+        self.showMp3Info(fileName)
+
+    def setMetadataArguments(self, fileName, **kwargs):
+        """
+        set metadata for song. put argument which one You want update
+
+        :param fileName: whole path for file; /home/music/Myslovitz/song.mp3
+        :param kwargs: key and value of parameter to set, (title, artist, album, artistalbum, tracknumber)
+        """
+        if not os.path.isfile(fileName):
+            print(bcolors.WARNING + "file doesn't exist: "+ fileName + bcolors.ENDC)
+            return
+        availablesKeys = EasyID3.valid_keys.keys()
+        availablesKeys = list(availablesKeys)
+        metatag = EasyID3(fileName)
+        for x in kwargs.items():
+            if x[0] in availablesKeys:
+                metatag[x[0]] = str(x[1])
+            else:
+                print(x[0], "is not available parameter")
+        metatag.save()
+        print(bcolors.OKGREEN + "[ID3] Added metadata" + bcolors.ENDC)
+        self.showMp3Info(fileName)
+
+    def setAlbumDir(self, catalog, albumName):
+        """
+        set album for all files in directory
+
+        :param catalog: path where You want update metadata for songs; /home/music/Myslovitz
+        :param albumName: name of album for songs in catalog;
+        :return: list of updated files
+        """
+        filesList = [f for f in os.listdir(catalog) if f.endswith(self.mp3ext)]
+        filesList.sort()
+        for fileName in filesList:
+            fileNameWithPath = os.path.join(catalog, fileName)
+            metatag = EasyID3(fileNameWithPath)
+            metatag[MetadataKeys.ALBUM] = albumName
+            metatag.save()
+            self.showMp3Info(fileNameWithPath)
+
+        return filesList
+
+    def setArtistDir(self, catalog, artistName):
+        """
+        set artist for all files in directory
+
+        :param catalog: path where You want update metadata for songs; /home/music/Myslovitz
+        :param artistName: name of artist for songs in catalog;
+        :return: list of updated files
+        """
+        filesList = [f for f in os.listdir(catalog) if f.endswith(self.mp3ext)]
+        filesList.sort()
+        for fileName in filesList:
+            fileNameWithPath = os.path.join(catalog, fileName)
+            metatag = EasyID3(fileNameWithPath)
+            metatag[MetadataKeys.ARTIST] = artistName
+            metatag.save()
+            self.showMp3Info(fileNameWithPath)
+
+        return filesList
+
+    def setTrackNumber(self, fileNameWithPath, trackNumber):
+        """
+        set number of track for mp3 file
+
+        :param fileNameWithPath: whole path for file; /home/music/Myslovitz/song.mp3
+        :param ytackNumber: number of track for set;
+        """
+        if not os.path.isfile(fileNameWithPath):
+            warningInfo="ERROR: file %s doesn't exist"%(fileNameWithPath)
+            print (bcolors.FAIL + warningInfo + bcolors.ENDC)
+            return
+        metatag = EasyID3(fileNameWithPath)
+        metatag[MetadataKeys.TRACK_NUMBER] = str(trackNumber)
+        metatag.save()
+        self.showMp3Info(fileNameWithPath)
+
+    def setMetadataMp3Info(self, flileName, data:Mp3Info):
+        """
+        set metadata for song. not all parameters need to be set
+
+        :param fileName: whole path for file; /home/music/Myslovitz/song.mp3
+        :param title: title
+        :param artist: artist
+        :param album: album
+        :param trackNumber: number of track
+        """
+        self.setMetadata(flileName,title=data.title, artist=data.artist, album=data.album, trackNumber=data.trackNumber, website=data.website, date=data.date)
+
+    def updateMetadata(self, catalog, albumName=None):
+        """
+        update metadata in catalog
+        artist and title will be get from file name; artist - title.mp3
+        some shit from filename will be removed
+
+        :param catalog: path where You want update metadata for songs; /home/music/Myslovitz
+        :param albumName: name of album for songs in catalog;
+        :return: list of updated files
+        """
+        if not os.path.isdir(catalog):
+            print(bcolors.WARNING + "catalog doesn't exist "+ catalog + bcolors.ENDC)
+            return
+
+        filesList = [f for f in os.listdir(catalog) if f.endswith(self.mp3ext)]
+        filesList.sort()
+        newFilesList = []
+        for x in range(len(filesList)):
+            originalFileName = filesList[x]
+            newFileNameWithPath = self._updateMetadataFromDirectory(catalog, originalFileName, albumName)
+            if newFileNameWithPath is not None:
+                newFilesList.append(newFileNameWithPath)
+        return newFilesList
+
+    def _updateMetadataFromDirectory(self, path, originalFileName, albumName=None):
+
+            newFileName = self._removeSheetFromFilename(path, originalFileName)
+            newSongName = newFileName.replace(self.mp3ext, "")
+
+            metadataSongName = self._convertSongnameOnMetadata(newSongName)
+            newFileNameWithPath = os.path.join(path, newFileName)
+            if not os.path.isfile(newFileNameWithPath):
+                warningInfo="WARNING: %s not exist"%(newFileName)
+                warnings.warn(warningInfo, Warning)
+                print(bcolors.WARNING + warningInfo + bcolors.ENDC)
+                return
+            metatag = EasyID3(newFileNameWithPath)
+            if "artist" in metatag and "title" in metatag and "album" in metatag and albumName is not None:
+                if "artist" in metatag and "title" in metatag and "album" in metatag:
+                    if metatag['album'][0] == albumName and metatag['artist'][0] == metadataSongName['artist'] and metatag['title'][0] == metadataSongName['title']:
+                        print(bcolors.OKGREEN + "Metadata is correct. Update is not needed: " + bcolors.ENDC)
+                        self.showMp3Info(newFileNameWithPath)
+                        return
+            elif "artist" in metatag and "title" in metatag:
+                if metatag['artist'][0] == metadataSongName['artist'] and metatag['title'][0] == metadataSongName['title']:
+                    print(bcolors.OKGREEN + "Metadata is correct. Update is not needed: " + bcolors.ENDC)
+                    self.showMp3Info(newFileNameWithPath)
+                    return
+
+            aktualny_timestamp_dostepu = os.path.getatime(newFileNameWithPath)
+            aktualny_timestamp_modyfikacji = os.path.getmtime(newFileNameWithPath)
+
+            self.setMetadata(newFileNameWithPath,
+                             title=metadataSongName['title'],
+                             artist=metadataSongName['artist'],
+                             album=albumName
+                             )
+
+            os.utime(newFileNameWithPath, (aktualny_timestamp_dostepu, aktualny_timestamp_modyfikacji))
+
+            return newFileNameWithPath
+
+    #youtubedl
+    def lookingForFileAccordWithYTFilename(self, path, songName, artist):
+
+        songName = self._removeSheetFromSongName(songName)
+        fileName="%s%s"%(songName,self.mp3ext)
+
+        if os.path.isfile(os.path.join(path, fileName)):
+            return songName
+
+        songName = "%s - %s"%(artist, songName)
+        fileName="%s%s"%(songName,self.mp3ext)
+        if os.path.isfile(os.path.join(path, fileName)):
+            return songName
+        else:
+            return None
+
+    #youtubedl
+    def renameAndAddMetadataToSong(self, MUSIC_PATH, fileName,
+                                   title, artist, albumName, website, date):
+        path=MUSIC_PATH
+
+        oldFileNameWithPath = os.path.join(path, fileName)
+
+        if not os.path.isfile(oldFileNameWithPath):
+            warningInfo="WARNING: %s not exist"%(fileName)
+            print (bcolors.WARNING + warningInfo + bcolors.ENDC)
+            return
+
+        songName = self._removeSheetFromSongName(title)
+        analyzeResult = self._analyzeSongname(songName, artist)
+
+        if analyzeResult is None:
+            warningInfo="ERROR: Unknown situation with songName"
+            print (bcolors.FAIL + warningInfo + bcolors.ENDC)
+            return
+
+        newFileName = self._renameFile(path, fileName, analyzeResult.newFileName)
+
+        newFileNameWithPath = os.path.join(path, newFileName)
+        self._addMetadata(newFileNameWithPath, analyzeResult.title, analyzeResult.artist, albumName, None, website, None, date)
+
+        return newFileNameWithPath
+
+    #youtubedl
+    def renameAndAddMetadataToPlaylist(self, PLAYLISTS_PATH, playlistName, fileName,
+                                       trackNumber, title, artist, album, website, date):
+        path=os.path.join(PLAYLISTS_PATH, playlistName)
+        albumPlaylist="YT "+playlistName
+
+        if not os.path.isfile(os.path.join(path, fileName)):
+            warningInfo="WARNING: %s not exist"%(fileName)
+            print (bcolors.WARNING + warningInfo + bcolors.ENDC)
+            return
+
+        songName = self._removeSheetFromSongName(title)
+        analyzeResult = self._analyzeSongname(songName, artist)
+        if analyzeResult is None:
+            warningInfo="ERROR: Unknown situation with fileName"
+            print (bcolors.FAIL + warningInfo + bcolors.ENDC)
+            return
+
+        newFileName = self._renameFile(path, fileName, analyzeResult.newFileName)
+
+        newFileNameWithPath = os.path.join(path, newFileName)
+        return self._addMetadata(newFileNameWithPath, analyzeResult.title, analyzeResult.artist, albumPlaylist, album, website, trackNumber, date)
+
+    def _addMetadata(self, fileNameWithPath, title, artist=None, album=None, albumArtist=None, website=None, trackNumber=None, date=None):
+        metatag = EasyID3(fileNameWithPath)
+        metatag[MetadataKeys.TITLE] = title
+        if artist is not None and len(artist) > 0:
+            metatag[MetadataKeys.ARTIST] = artist
+        if album is not None:
+            metatag[MetadataKeys.ALBUM] = album
+        if albumArtist is not None and len(albumArtist) > 0:
+            metatag[MetadataKeys.ALBUM_ARTIST] = albumArtist
+        if website is not None and len(website) > 0:
+            metatag[MetadataKeys.WEBSITE] = website
+        if trackNumber is not None:
+            metatag[MetadataKeys.TRACK_NUMBER] = str(trackNumber)
+        if date is not None:
+            splitted = date.split("-")
+            if len(splitted) == 3:
+                metatag[MetadataKeys.DATE] = date
+            else:
+                print("wrong format of date")
+        metatag.save()
+        print (bcolors.OKGREEN + "[ID3] Added metadata" + bcolors.ENDC)
+        self.showMp3Info(fileNameWithPath)
+        return fileNameWithPath
+
     def _removeSheetFromSongName(self, songName):
 
         unsupportedName = ["Oficial Video HD",
@@ -371,307 +640,6 @@ class MetadataManager:
         # something wrong
         return None
 
-    def _updateMetadataFromDirectory(self, path, originalFileName, albumName):
-
-            newFileName = self._removeSheetFromFilename(path, originalFileName)
-            newSongName = newFileName.replace(self.mp3ext, "")
-
-            metadataSongName = self._convertSongnameOnMetadata(newSongName)
-            newFileNameWithPath = os.path.join(path, newFileName)
-            if not os.path.isfile(newFileNameWithPath):
-                warningInfo="WARNING: %s not exist"%(newFileName)
-                warnings.warn(warningInfo, Warning)
-                print(bcolors.WARNING + warningInfo + bcolors.ENDC)
-                return
-            metatag = EasyID3(newFileNameWithPath)
-            if "artist" in metatag and "title" in metatag and "album" in metatag:
-                if metatag['album'][0] == albumName and metatag['artist'][0] == metadataSongName['artist'] and metatag['title'][0] == metadataSongName['title']:
-                    print(bcolors.OKGREEN + "Metadata is correct. Update is not needed: " + bcolors.ENDC)
-                    self.showMp3Info(newFileNameWithPath)
-                    return
-
-            metatag['album'] = albumName
-            metatag['artist'] = metadataSongName['artist']
-            metatag['title'] = metadataSongName['title']
-            metatag.save()
-            print(bcolors.OKGREEN + "[ID3] Added metadata" + bcolors.ENDC)
-            self.showMp3Info(newFileNameWithPath)
-            return newFileNameWithPath
-
-    #youtubedl
-    def renameAndAddMetadataToSong(self, MUSIC_PATH, fileName,
-                                   title, artist, albumName, website, date):
-        path=MUSIC_PATH
-
-        oldFileNameWithPath = os.path.join(path, fileName)
-
-        if not os.path.isfile(oldFileNameWithPath):
-            warningInfo="WARNING: %s not exist"%(fileName)
-            print (bcolors.WARNING + warningInfo + bcolors.ENDC)
-            return
-
-        songName = self._removeSheetFromSongName(title)
-        analyzeResult = self._analyzeSongname(songName, artist)
-
-        if analyzeResult is None:
-            warningInfo="ERROR: Unknown situation with songName"
-            print (bcolors.FAIL + warningInfo + bcolors.ENDC)
-            return
-
-        newFileName = self._renameFile(path, fileName, analyzeResult.newFileName)
-
-        newFileNameWithPath = os.path.join(path, newFileName)
-        self._addMetadata(newFileNameWithPath, analyzeResult.title, analyzeResult.artist, albumName, None, website, None, date)
-
-        return newFileNameWithPath
-
-    #youtubedl
-    def renameAndAddMetadataToPlaylist(self, PLAYLISTS_PATH, playlistName, fileName,
-                                       trackNumber, title, artist, album, website, date):
-        path=os.path.join(PLAYLISTS_PATH, playlistName)
-        albumPlaylist="YT "+playlistName
-
-        if not os.path.isfile(os.path.join(path, fileName)):
-            warningInfo="WARNING: %s not exist"%(fileName)
-            print (bcolors.WARNING + warningInfo + bcolors.ENDC)
-            return
-
-        songName = self._removeSheetFromSongName(title)
-        analyzeResult = self._analyzeSongname(songName, artist)
-        if analyzeResult is None:
-            warningInfo="ERROR: Unknown situation with fileName"
-            print (bcolors.FAIL + warningInfo + bcolors.ENDC)
-            return
-
-        newFileName = self._renameFile(path, fileName, analyzeResult.newFileName)
-
-        newFileNameWithPath = os.path.join(path, newFileName)
-        return self._addMetadata(newFileNameWithPath, analyzeResult.title, analyzeResult.artist, albumPlaylist, album, website, trackNumber, date)
-
-    def _addMetadata(self, fileNameWithPath, title, artist=None, album=None, albumArtist=None, website=None, trackNumber=None, date=None):
-        metatag = EasyID3(fileNameWithPath)
-        metatag[MetadataKeys.TITLE] = title
-        if artist is not None and len(artist) > 0:
-            metatag[MetadataKeys.ARTIST] = artist
-        if album is not None:
-            metatag[MetadataKeys.ALBUM] = album
-        if albumArtist is not None and len(albumArtist) > 0:
-            metatag[MetadataKeys.ALBUM_ARTIST] = albumArtist
-        if website is not None and len(website) > 0:
-            metatag[MetadataKeys.WEBSITE] = website
-        if trackNumber is not None:
-            metatag[MetadataKeys.TRACK_NUMBER] = str(trackNumber)
-        if date is not None:
-            metatag[MetadataKeys.DATE] = date
-        metatag.save()
-        print (bcolors.OKGREEN + "[ID3] Added metadata" + bcolors.ENDC)
-        self.showMp3Info(fileNameWithPath)
-        return fileNameWithPath
-
-    #youtubedl
-    def lookingForFileAccordWithYTFilename(self, path, songName, artist):
-
-        songName = self._removeSheetFromSongName(songName)
-        fileName="%s%s"%(songName,self.mp3ext)
-
-        if os.path.isfile(os.path.join(path, fileName)):
-            return songName
-
-        songName = "%s - %s"%(artist, songName)
-        fileName="%s%s"%(songName,self.mp3ext)
-        if os.path.isfile(os.path.join(path, fileName)):
-            return songName
-        else:
-            return None
-
-    def updateMetadataYoutube(self, PLAYLISTS_PATH, playlistName):
-        """
-        update metadata according to Youtube platlist analogy
-        album will be updated with YT subtext; YT chillout
-        artist and title will be get from file name; artist - title.mp3
-        some shit from filename will be removed
-
-        :param PLAYLISTS_PATH: path where playlists are download; /home/music/YT playlists
-        :param playlistName: name of playlist which one You want update metadata; chillout
-        :return: list of updated files
-        """
-
-        if not os.path.isdir(PLAYLISTS_PATH):
-            print(bcolors.WARNING + "catalog doesn't exist "+ PLAYLISTS_PATH + bcolors.ENDC)
-            return
-
-        path=os.path.join(PLAYLISTS_PATH, playlistName)
-        albumName="YT "+playlistName
-        newFilesList = []
-
-        filesList = [f for f in os.listdir(path) if f.endswith(self.mp3ext)]
-        filesList.sort()
-        for x in range(len(filesList)):
-            originalFileName = filesList[x]
-            newFileNameWithPath = self._updateMetadataFromDirectory(path, originalFileName, albumName)
-            if newFileNameWithPath is not None:
-                newFilesList.append(newFileNameWithPath)
-        return newFilesList
-
-    def updateMetadata(self, catalog, albumName):
-        """
-        update metadata in catalog
-        artist and title will be get from file name; artist - title.mp3
-        some shit from filename will be removed
-
-        :param catalog: path where You want update metadata for songs; /home/music/Myslovitz
-        :param albumName: name of album for songs in catalog;
-        :return: list of updated files
-        """
-        if not os.path.isdir(catalog):
-            print(bcolors.WARNING + "catalog doesn't exist "+ catalog + bcolors.ENDC)
-            return
-
-        filesList = [f for f in os.listdir(catalog) if f.endswith(self.mp3ext)]
-        filesList.sort()
-        newFilesList = []
-        for x in range(len(filesList)):
-            originalFileName = filesList[x]
-            newFileNameWithPath = self._updateMetadataFromDirectory(catalog, originalFileName, albumName)
-            if newFileNameWithPath is not None:
-                newFilesList.append(newFileNameWithPath)
-        return newFilesList
-
-    def setAlbum(self, catalog, albumName):
-        """
-        set album for all files in directory
-
-        :param catalog: path where You want update metadata for songs; /home/music/Myslovitz
-        :param albumName: name of album for songs in catalog;
-        :return: list of updated files
-        """
-        filesList = [f for f in os.listdir(catalog) if f.endswith(self.mp3ext)]
-        filesList.sort()
-        for fileName in filesList:
-            fileNameWithPath = os.path.join(catalog, fileName)
-            metatag = EasyID3(fileNameWithPath)
-            metatag[MetadataKeys.ALBUM] = albumName
-            metatag.save()
-            self.showMp3Info(fileNameWithPath)
-
-        return filesList
-
-    def setArtist(self, catalog, artistName):
-        """
-        set artist for all files in directory
-
-        :param catalog: path where You want update metadata for songs; /home/music/Myslovitz
-        :param artistName: name of artist for songs in catalog;
-        :return: list of updated files
-        """
-        filesList = [f for f in os.listdir(catalog) if f.endswith(self.mp3ext)]
-        filesList.sort()
-        for fileName in filesList:
-            fileNameWithPath = os.path.join(catalog, fileName)
-            metatag = EasyID3(fileNameWithPath)
-            metatag[MetadataKeys.ARTIST] = artistName
-            metatag.save()
-            self.showMp3Info(fileNameWithPath)
-
-        return filesList
-
-    def setTrackNumber(self, fileNameWithPath, trackNumber):
-        """
-        set number of track for mp3 file
-
-        :param fileNameWithPath: whole path for file; /home/music/Myslovitz/song.mp3
-        :param ytackNumber: number of track for set;
-        """
-        if not os.path.isfile(fileNameWithPath):
-            warningInfo="ERROR: file %s doesn't exist"%(fileNameWithPath)
-            print (bcolors.FAIL + warningInfo + bcolors.ENDC)
-            return
-        metatag = EasyID3(fileNameWithPath)
-        metatag[MetadataKeys.TRACK_NUMBER] = str(trackNumber)
-        metatag.save()
-        self.showMp3Info(fileNameWithPath)
-
-    def setMetadata(self, fileName=None, title=None, artist=None, album=None, trackNumber=None, website=None, date=None):
-        """
-        set metadata for song. not all parameters need to be set
-
-        :param fileName: whole path for file; /home/music/Myslovitz/song.mp3
-        :param title: title
-        :param artist: artist
-        :param album: album
-        :param trackNumber: number of track
-        """
-        if fileName == None:
-            fileName = self.fileName
-        else:
-            self.fileName = fileName
-
-        if not os.path.isfile(fileName):
-            print(bcolors.WARNING + "file doesn't exist: "+ fileName + bcolors.ENDC)
-            return
-
-        aktualny_timestamp_dostepu = os.path.getatime(fileName)
-        aktualny_timestamp_modyfikacji = os.path.getmtime(fileName)
-        aktualny_timestamp_stworzenia = os.path.getctime(fileName)
-
-        metatag = EasyID3(fileName)
-        if title is not None:
-            metatag[MetadataKeys.TITLE] = title
-        if artist is not None:
-            metatag[MetadataKeys.ARTIST] = artist
-        if album is not None:
-            metatag[MetadataKeys.ALBUM] = album
-        if trackNumber is not None:
-            metatag[MetadataKeys.TRACK_NUMBER] = str(trackNumber)
-        if website is not None:
-            metatag[MetadataKeys.WEBSITE] = website
-        if date is not None:
-            splitted = date.split("-")
-            if len(splitted) == 3:
-                metatag[MetadataKeys.DATE] = date
-            else:
-                print("wrong format of date")
-
-        metatag.save()
-
-        os.utime(fileName, (aktualny_timestamp_dostepu, aktualny_timestamp_modyfikacji))
-        print(bcolors.OKGREEN + "[ID3] Added metadata" + bcolors.ENDC)
-        self.showMp3Info(fileName)
-
-    def setMetadataMp3Info(self, flileName, data:Mp3Info):
-        """
-        set metadata for song. not all parameters need to be set
-
-        :param fileName: whole path for file; /home/music/Myslovitz/song.mp3
-        :param title: title
-        :param artist: artist
-        :param album: album
-        :param trackNumber: number of track
-        """
-        self.setMetadata(flileName,title=data.title, artist=data.artist, album=data.album, trackNumber=data.trackNumber, website=data.website, date=data.date)
-
-
-    def setMetadataArguments(self, fileName, **kwargs):
-        """
-        set metadata for song. put argument which one You want update
-
-        :param fileName: whole path for file; /home/music/Myslovitz/song.mp3
-        :param kwargs: key and value of parameter to set, (title, artist, album, artistalbum, tracknumber)
-        """
-        if not os.path.isfile(fileName):
-            print(bcolors.WARNING + "file doesn't exist: "+ fileName + bcolors.ENDC)
-            return
-        availablesKeys = EasyID3.valid_keys.keys()
-        availablesKeys = list(availablesKeys)
-        metatag = EasyID3(fileName)
-        for x in kwargs.items():
-            if x[0] in availablesKeys:
-                metatag[x[0]] = str(x[1])
-            else:
-                print(x[0], "is not available parameter")
-        metatag.save()
-        print(bcolors.OKGREEN + "[ID3] Added metadata" + bcolors.ENDC)
-        self.showMp3Info(fileName)
 
 if __name__ == "__main__":
     md = MetadataManager()
