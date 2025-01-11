@@ -166,7 +166,6 @@ class MetadataManager:
 
         aktualny_timestamp_dostepu = os.path.getatime(fileName)
         aktualny_timestamp_modyfikacji = os.path.getmtime(fileName)
-        #aktualny_timestamp_stworzenia = os.path.getctime(fileName)
 
         self._addMetadata(fileName, title, artist, album, None, website, trackNumber, date)
 
@@ -308,16 +307,11 @@ class MetadataManager:
                     print(bcolors.OKGREEN + log + bcolors.ENDC)
                     return
 
-            aktualny_timestamp_dostepu = os.path.getatime(newFileNameWithPath)
-            aktualny_timestamp_modyfikacji = os.path.getmtime(newFileNameWithPath)
-
             self.setMetadata(newFileNameWithPath,
                              title=metadataSongName['title'],
                              artist=metadataSongName['artist'],
                              album=albumName
                              )
-
-            os.utime(newFileNameWithPath, (aktualny_timestamp_dostepu, aktualny_timestamp_modyfikacji))
 
             return newFileNameWithPath
 
