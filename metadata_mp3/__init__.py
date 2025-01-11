@@ -171,8 +171,6 @@ class MetadataManager:
         self._addMetadata(fileName, title, artist, album, None, website, trackNumber, date)
 
         os.utime(fileName, (aktualny_timestamp_dostepu, aktualny_timestamp_modyfikacji))
-        print(bcolors.OKGREEN + "[ID3] Added metadata" + bcolors.ENDC)
-        self.showMp3Info(fileName)
 
     def setMetadataArguments(self, fileName, **kwargs):
         """
@@ -288,13 +286,12 @@ class MetadataManager:
 
     def _updateMetadataFromDirectory(self, path, originalFileName, albumName=None):
 
-            newFileName = self._removeSheetFromFilename(path, originalFileName)
-            newSongName = newFileName.replace(self.mp3ext, "")
+            songName = originalFileName.replace(self.mp3ext, "")
 
-            metadataSongName = self._convertSongnameOnMetadata(newSongName)
-            newFileNameWithPath = os.path.join(path, newFileName)
+            metadataSongName = self._convertSongnameOnMetadata(songName)
+            newFileNameWithPath = os.path.join(path, originalFileName)
             if not os.path.isfile(newFileNameWithPath):
-                warningInfo="WARNING: %s not exist"%(newFileName)
+                warningInfo="WARNING: %s not exist"%(originalFileName)
                 warnings.warn(warningInfo, Warning)
                 print(bcolors.WARNING + warningInfo + bcolors.ENDC)
                 return
@@ -302,13 +299,13 @@ class MetadataManager:
             if "artist" in metatag and "title" in metatag and "album" in metatag and albumName is not None:
                 if "artist" in metatag and "title" in metatag and "album" in metatag:
                     if metatag['album'][0] == albumName and metatag['artist'][0] == metadataSongName['artist'] and metatag['title'][0] == metadataSongName['title']:
-                        print(bcolors.OKGREEN + "Metadata is correct. Update is not needed: " + bcolors.ENDC)
-                        self.showMp3Info(newFileNameWithPath)
+                        log = "Metadata is correct. Update is not needed: " + originalFileName
+                        print(bcolors.OKGREEN + log + bcolors.ENDC)
                         return
-            elif "artist" in metatag and "title" in metatag:
+            elif "artist" in metatag and "title" in metatag and albumName is None:
                 if metatag['artist'][0] == metadataSongName['artist'] and metatag['title'][0] == metadataSongName['title']:
-                    print(bcolors.OKGREEN + "Metadata is correct. Update is not needed: " + bcolors.ENDC)
-                    self.showMp3Info(newFileNameWithPath)
+                    log = "Metadata is correct. Update is not needed: " + originalFileName
+                    print(bcolors.OKGREEN + log + bcolors.ENDC)
                     return
 
             aktualny_timestamp_dostepu = os.path.getatime(newFileNameWithPath)
