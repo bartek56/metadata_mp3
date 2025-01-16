@@ -2,10 +2,19 @@ from __future__ import unicode_literals
 import os
 import warnings
 import logging
+import requests
 from mutagen.easyid3 import EasyID3
 from mutagen.mp3 import MP3
+from mutagen.id3 import ID3, APIC
 
 logger = logging.getLogger(__name__)
+
+class CoverQuality():
+    MIN         = "default.jpg"
+    LOW         = "mqdefault.jpg"
+    MEDIUM      = "hqdefault.jpg"
+    HIGH        = "sddefault.jpg"
+    VERY_HIGH   = "maxresdefault.jpg"
 
 class bcolors:
     HEADER = '\033[95m'
@@ -128,7 +137,8 @@ class MetadataManager:
 
     def showMp3InfoDir(self, dir):
         if not os.path.isdir(dir):
-            print("Wrong dir path")
+            logger.error("Wrong dir path %s", dir)
+            return
 
         files = os.listdir(dir)
         listMp3 = []
@@ -258,6 +268,56 @@ class MetadataManager:
         :param trackNumber: number of track
         """
         self.setMetadata(flileName,title=data.title, artist=data.artist, album=data.album, trackNumber=data.trackNumber, website=data.website, date=data.date)
+
+    def addCoverOfYtMp3(self, mp3File, hash, quality=CoverQuality.LOW):
+        if not os.path.isfile(mp3File):
+            logger.error("Wrong path to file: %s", mp3File)
+            return
+        imageUrl = "https://i.ytimg.com/vi/"+hash+"/"+quality
+        response = requests.get(imageUrl)
+        if response.status_code != 200:
+            logger.error("Error to download cover from link %s", imageUrl)
+            return
+        return self._addCoverOfMp3(mp3File, response.content)
+
+    def _addCoverOfMp3(self, mp3File, image):
+        audio = MP3(mp3File, ID3=ID3)
+
+        apic_tags = [tag for tag in audio.tags.keys() if tag.startswith('APIC')]
+        if apic_tags:
+            logger.warning("Cover exists in file %s", mp3File)
+            return
+
+        aktualny_timestamp_dostepu = os.path.getatime(mp3File)
+        aktualny_timestamp_modyfikacji = os.path.getmtime(mp3File)
+
+        audio.tags.add(APIC(encoding=3, # UTF-8
+                        mime='image/jpeg', # Typ MIME (JPEG/PNG)
+                        type=3, # fron cover
+                        desc='Cover',
+                        data=image
+                        ))
+        audio.save()
+
+        os.utime(mp3File, (aktualny_timestamp_dostepu, aktualny_timestamp_modyfikacji))
+        logger.debug("Cover was added to %s file", mp3File)
+
+    def removeCoverOfMp3(self, mp3File):
+        aktualny_timestamp_dostepu = os.path.getatime(mp3File)
+        aktualny_timestamp_modyfikacji = os.path.getmtime(mp3File)
+
+        audio = MP3(mp3File, ID3=ID3)
+        apic_tags = [tag for tag in audio.tags.keys() if tag.startswith('APIC')]
+        if not apic_tags:
+            logger.debug("Cover doesn't exists in file %s", mp3File)
+            return
+
+        for tag in apic_tags:
+            del audio.tags[tag]
+        audio.save()
+        os.utime(mp3File, (aktualny_timestamp_dostepu, aktualny_timestamp_modyfikacji))
+
+        logger.info("Cover was removed in file %s", mp3File)
 
     def updateMetadata(self, catalog, albumName=None):
         """
@@ -589,6 +649,7 @@ class MetadataManager:
         return result
 
     def _analyzeSongname(self, songName, artist):
+        # TODO save three artists
         artist = self._cutLengthAndRemoveDuplicates(artist, self.maxLenghtOfArtist)
         if len(songName) > self.maxLenghtOfTitle:
             songName = self._cutLenght(songName, self.maxLenghtOfTitle)
