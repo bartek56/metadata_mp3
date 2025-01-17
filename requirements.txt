@@ -2,3 +2,4 @@ mutagen
 pytest
 pytest-html
 coverage
+requests
