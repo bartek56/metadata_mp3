@@ -430,8 +430,8 @@ class TestAddMetadataPlaylist(TestCase):
     def renameAndAddMetadataToPlatlistCall(self):
         self.renameFile(self.fileNameInput, self.playlistName)
         return self.metadata_mp3.renameAndAddMetadataToPlaylist(
-            self.currentDirectory, self.playlistName, self.fileNameInput, 1,
-            self.titleInput, self.artistInput, self.albumInput, self.website, self.date)
+            os.path.join(self.currentDirectory, self.playlistName), self.fileNameInput, 1,
+            self.titleInput, self.artistInput, "YT "+self.playlistName, self.albumInput, self.website, self.date)
 
     def test_artistIsKnownFromInput(self):
         self.setInputParameters(self.title, self.artist, self.album, self.fileNameTitleTest)

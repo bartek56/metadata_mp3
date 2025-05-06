@@ -151,8 +151,8 @@ class MetadataManager:
                     isTrackNumber = False
                 listMp3.append(mp3Info)
         if isTrackNumber:
-            result = sorted(listMp3, key=lambda x: float(x.trackNumber))
-        for x in result:
+            listMp3 = sorted(listMp3, key=lambda x: float(x.trackNumber))
+        for x in listMp3:
             print(x)
 
     def setMetadata(self, fileName=None, title=None, artist=None, album=None, trackNumber=None, website=None, date=None):
@@ -302,6 +302,11 @@ class MetadataManager:
         os.utime(mp3File, (aktualny_timestamp_dostepu, aktualny_timestamp_modyfikacji))
         logger.debug("Cover was added to %s file", mp3File)
 
+    def addCoverOfMp3ForAlbum(self, dir, image):
+        filesList = [f for f in os.listdir(dir) if f.endswith("jpeg")]
+        for file in filesList:
+            self._addCoverOfMp3(file, image)
+
     def removeCoverOfMp3(self, mp3File):
         aktualny_timestamp_dostepu = os.path.getatime(mp3File)
         aktualny_timestamp_modyfikacji = os.path.getmtime(mp3File)
@@ -419,10 +424,8 @@ class MetadataManager:
         return newFileNameWithPath
 
     #youtubedl
-    def renameAndAddMetadataToPlaylist(self, PLAYLISTS_PATH, playlistName, fileName,
-                                       trackNumber, title, artist, album, website, date):
-        path=os.path.join(PLAYLISTS_PATH, playlistName)
-        albumPlaylist="YT "+playlistName
+    def renameAndAddMetadataToPlaylist(self, path, fileName, trackNumber, title, artist,
+                                       album, albumArtist, website, date):
 
         if not os.path.isfile(os.path.join(path, fileName)):
             warningInfo="WARNING: %s not exist"%(fileName)
@@ -439,7 +442,7 @@ class MetadataManager:
         newFileName = self._renameFile(path, fileName, analyzeResult.newFileName)
 
         newFileNameWithPath = os.path.join(path, newFileName)
-        return self._addMetadata(newFileNameWithPath, analyzeResult.title, analyzeResult.artist, albumPlaylist, album, website, trackNumber, date)
+        return self._addMetadata(newFileNameWithPath, analyzeResult.title, analyzeResult.artist, album, albumArtist, website, trackNumber, date)
 
     def _addMetadata(self, fileNameWithPath, title, artist=None, album=None, albumArtist=None, website=None, trackNumber=None, date=None):
         metatag = EasyID3(fileNameWithPath)
@@ -455,11 +458,7 @@ class MetadataManager:
         if trackNumber is not None:
             metatag[MetadataKeys.TRACK_NUMBER] = str(trackNumber)
         if date is not None:
-            splitted = date.split("-")
-            if len(splitted) == 3:
-                metatag[MetadataKeys.DATE] = date
-            else:
-                print("wrong format of date")
+            metatag[MetadataKeys.DATE] = date
         metatag.save()
         print (bcolors.OKGREEN + "[ID3] Added metadata" + bcolors.ENDC)
         self.showMp3Info(fileNameWithPath)
