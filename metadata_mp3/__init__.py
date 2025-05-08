@@ -423,11 +423,10 @@ class MetadataManager:
 
         return newFileNameWithPath
 
-    #youtubedl
-    def renameAndAddMetadataToPlaylist(self, path, fileName, trackNumber, title, artist,
+    def renameAndAddMetadataToPlaylist(self, fileName, trackNumber, title, artist,
                                        album, albumArtist, website, date):
 
-        if not os.path.isfile(os.path.join(path, fileName)):
+        if not os.path.isfile(fileName):
             warningInfo="WARNING: %s not exist"%(fileName)
             print (bcolors.WARNING + warningInfo + bcolors.ENDC)
             return
@@ -438,8 +437,9 @@ class MetadataManager:
             warningInfo="ERROR: Unknown situation with fileName"
             print (bcolors.FAIL + warningInfo + bcolors.ENDC)
             return
-
-        newFileName = self._renameFile(path, fileName, analyzeResult.newFileName)
+        file = fileName.split('/')[-1]
+        path = fileName.replace(file,"")
+        newFileName = self._renameFile(path, file, analyzeResult.newFileName)
 
         newFileNameWithPath = os.path.join(path, newFileName)
         return self._addMetadata(newFileNameWithPath, analyzeResult.title, analyzeResult.artist, album, albumArtist, website, trackNumber, date)
@@ -535,10 +535,9 @@ class MetadataManager:
 
         originalFileNameWithPath=os.path.join(path, oldFilename)
         if not os.path.isfile(originalFileNameWithPath):
-            warningInfo="ERROR: source file doesn't exist: "%(originalFileNameWithPath)
+            warningInfo="ERROR: source file %s doesn't exist: "%(originalFileNameWithPath)
             print (bcolors.WARNING + warningInfo + bcolors.ENDC)
             return
-
 
         fileNameWithPath = os.path.join(path, newFilename)
         if os.path.isfile(fileNameWithPath):
