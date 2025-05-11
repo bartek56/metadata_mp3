@@ -155,7 +155,7 @@ class MetadataManager:
         for x in listMp3:
             print(x)
 
-    def setMetadata(self, fileName=None, title=None, artist=None, album=None, trackNumber=None, website=None, date=None):
+    def setMetadata(self, fileName=None, title=None, artist=None, album=None, albumArtist=None, trackNumber=None, website=None, date=None):
         """
         set metadata for song. not all parameters need to be set
 
@@ -177,7 +177,7 @@ class MetadataManager:
         aktualny_timestamp_dostepu = os.path.getatime(fileName)
         aktualny_timestamp_modyfikacji = os.path.getmtime(fileName)
 
-        self._addMetadata(fileName, title, artist, album, None, website, trackNumber, date)
+        self._addMetadata(fileName, title, artist, album, albumArtist, website, trackNumber, date)
 
         os.utime(fileName, (aktualny_timestamp_dostepu, aktualny_timestamp_modyfikacji))
 
@@ -236,6 +236,25 @@ class MetadataManager:
             fileNameWithPath = os.path.join(catalog, fileName)
             metatag = EasyID3(fileNameWithPath)
             metatag[MetadataKeys.ARTIST] = artistName
+            metatag.save()
+            self.showMp3Info(fileNameWithPath)
+
+        return filesList
+
+    def setDateDir(self, catalog, date):
+        """
+        set date for all files in directory
+
+        :param catalog: path where You want update metadata for songs; /home/music/Myslovitz
+        :param artistName: name of artist for songs in catalog;
+        :return: list of updated files
+        """
+        filesList = [f for f in os.listdir(catalog) if f.endswith(self.mp3ext)]
+        filesList.sort()
+        for fileName in filesList:
+            fileNameWithPath = os.path.join(catalog, fileName)
+            metatag = EasyID3(fileNameWithPath)
+            metatag[MetadataKeys.DATE] = date
             metatag.save()
             self.showMp3Info(fileNameWithPath)
 
@@ -444,9 +463,10 @@ class MetadataManager:
         newFileNameWithPath = os.path.join(path, newFileName)
         return self._addMetadata(newFileNameWithPath, analyzeResult.title, analyzeResult.artist, album, albumArtist, website, trackNumber, date)
 
-    def _addMetadata(self, fileNameWithPath, title, artist=None, album=None, albumArtist=None, website=None, trackNumber=None, date=None):
+    def _addMetadata(self, fileNameWithPath, title=None, artist=None, album=None, albumArtist=None, website=None, trackNumber=None, date=None):
         metatag = EasyID3(fileNameWithPath)
-        metatag[MetadataKeys.TITLE] = title
+        if title is not None:
+            metatag[MetadataKeys.TITLE] = title
         if artist is not None and len(artist) > 0:
             metatag[MetadataKeys.ARTIST] = artist
         if album is not None:

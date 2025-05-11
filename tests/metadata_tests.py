@@ -748,12 +748,13 @@ class TestSetMetadata(TestCase):
         testFileNameWithPath = os.path.join(currentDirectory,testCatalog, testFileName)
         shutil.copy(originalTestFileNameWithPath, testFileNameWithPath)
 
-        self.metadata_mp3.setMetadata(testFileNameWithPath, "title test", "artist test", "album test", 5)
+        self.metadata_mp3.setMetadata(testFileNameWithPath, "title test", "artist test", "album test", "album artist test", 5)
 
         metatag = EasyID3(testFileNameWithPath)
         self.assertEqual(metatag['title'][0], "title test")
         self.assertEqual(metatag['artist'][0], "artist test")
         self.assertEqual(metatag['album'][0], "album test")
+        self.assertEqual(metatag['albumartist'][0], "album artist test")
         self.assertEqual(metatag['tracknumber'][0], "5")
 
         shutil.rmtree(os.path.join(currentDirectory,testCatalog))
