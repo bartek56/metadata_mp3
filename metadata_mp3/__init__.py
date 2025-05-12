@@ -174,12 +174,7 @@ class MetadataManager:
             print(bcolors.WARNING + "file doesn't exist: "+ fileName + bcolors.ENDC)
             return
 
-        aktualny_timestamp_dostepu = os.path.getatime(fileName)
-        aktualny_timestamp_modyfikacji = os.path.getmtime(fileName)
-
         self._addMetadata(fileName, title, artist, album, albumArtist, website, trackNumber, date)
-
-        os.utime(fileName, (aktualny_timestamp_dostepu, aktualny_timestamp_modyfikacji))
 
     def setMetadataArguments(self, fileName, **kwargs):
         """
@@ -399,57 +394,12 @@ class MetadataManager:
 
             return newFileNameWithPath
 
-    #youtubedl
-    def lookingForFileAccordWithYTFilename(self, path, songName, artist):
-
-        songName = self._removeSheetFromSongName(songName)
-        fileName="%s%s"%(songName,self.mp3ext)
-
-        if os.path.isfile(os.path.join(path, fileName)):
-            return songName
-
-        songName = "%s - %s"%(artist, songName)
-        fileName="%s%s"%(songName,self.mp3ext)
-        if os.path.isfile(os.path.join(path, fileName)):
-            return songName
-        else:
-            return None
-
-    #youtubedl
-    def renameAndAddMetadataToSong(self, MUSIC_PATH, fileName,
-                                   title, artist, albumName, website, date):
-        path=MUSIC_PATH
-
-        oldFileNameWithPath = os.path.join(path, fileName)
-
-        if not os.path.isfile(oldFileNameWithPath):
-            warningInfo="WARNING: %s not exist"%(fileName)
-            print (bcolors.WARNING + warningInfo + bcolors.ENDC)
-            return
-
-        songName = self._removeSheetFromSongName(title)
-        analyzeResult = self._analyzeSongname(songName, artist)
-
-        if analyzeResult is None:
-            warningInfo="ERROR: Unknown situation with songName"
-            print (bcolors.FAIL + warningInfo + bcolors.ENDC)
-            return
-
-        newFileName = self._renameFile(path, fileName, analyzeResult.newFileName)
-
-        newFileNameWithPath = os.path.join(path, newFileName)
-        self._addMetadata(newFileNameWithPath, analyzeResult.title, analyzeResult.artist, albumName, None, website, None, date)
-
-        return newFileNameWithPath
-
-    def renameAndAddMetadataToPlaylist(self, fileName, trackNumber, title, artist,
+    def renameAndAddMetadata(self, fileName, trackNumber, title, artist,
                                        album, albumArtist, website, date):
-
         if not os.path.isfile(fileName):
             warningInfo="WARNING: %s not exist"%(fileName)
             print (bcolors.WARNING + warningInfo + bcolors.ENDC)
             return
-
         songName = self._removeSheetFromSongName(title)
         analyzeResult = self._analyzeSongname(songName, artist)
         if analyzeResult is None:
@@ -464,6 +414,9 @@ class MetadataManager:
         return self._addMetadata(newFileNameWithPath, analyzeResult.title, analyzeResult.artist, album, albumArtist, website, trackNumber, date)
 
     def _addMetadata(self, fileNameWithPath, title=None, artist=None, album=None, albumArtist=None, website=None, trackNumber=None, date=None):
+        aktualny_timestamp_dostepu = os.path.getatime(fileNameWithPath)
+        aktualny_timestamp_modyfikacji = os.path.getmtime(fileNameWithPath)
+
         metatag = EasyID3(fileNameWithPath)
         if title is not None:
             metatag[MetadataKeys.TITLE] = title
@@ -480,6 +433,8 @@ class MetadataManager:
         if date is not None:
             metatag[MetadataKeys.DATE] = date
         metatag.save()
+
+        os.utime(fileNameWithPath, (aktualny_timestamp_dostepu, aktualny_timestamp_modyfikacji))
         print (bcolors.OKGREEN + "[ID3] Added metadata" + bcolors.ENDC)
         self.showMp3Info(fileNameWithPath)
         return fileNameWithPath
@@ -538,14 +493,15 @@ class MetadataManager:
 
         return songName
 
-    def _removeSheetFromFilename(self, path, originalFileName):
-        result = originalFileName
-        fileNameWithoutExtension = originalFileName.replace(self.mp3ext, "")
+    def _removeSheetFromFilename(self, file):
+        fileName = file.split("/")[-1]
+        path = file.replace(fileName, "")
+        fileNameWithoutExtension = fileName.replace(self.mp3ext, "")
 
         fileNameWithoutExtension = self._removeSheetFromSongName(fileNameWithoutExtension)
         fileNameWithExtension = "%s%s"%(fileNameWithoutExtension, self.mp3ext)
 
-        return self._renameFile(path, originalFileName, fileNameWithExtension)
+        return self._renameFile(path, fileName, fileNameWithExtension)
 
     def _renameFile(self, path, oldFilename, newFilename):
         if oldFilename == newFilename:

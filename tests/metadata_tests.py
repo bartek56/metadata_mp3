@@ -101,30 +101,6 @@ class TestLookingForFileAccordWithYTFilename(TestCase):
         shutil.copy(originalTestFileNameWithPath, testFileNameWithPath)
         return testFileNameWithPath
 
-    def test_1(self):
-        self.setTestFileName("Counting Crows - Colorblind.mp3")
-        title = "Colorblind"
-
-        resultSongName = self.metadata_mp3.lookingForFileAccordWithYTFilename(self.currentDirectory, title, self.artist)
-
-        self.assertEqual(resultSongName, self.songNameExpected)
-
-    def test_2(self):
-        self.setTestFileName("Counting Crows - Colorblind-test.mp3")
-        title = "Colorblind-test"
-
-        resultSongName = self.metadata_mp3.lookingForFileAccordWithYTFilename(self.currentDirectory, title, self.artist)
-
-        self.assertEqual(resultSongName, self.songNameExpected)
-
-    def test_3(self):
-        self.setTestFileName("Colorblind.mp3")
-        title = "Colorblind"
-
-        resultSongName = self.metadata_mp3.lookingForFileAccordWithYTFilename(self.currentDirectory, title, self.artist)
-
-        self.assertEqual(resultSongName, self.songNameExpected)
-
 class TestAddMetadataSong(TestCase):
     title = "Colorblind"
     artist = "Counting Crows"
@@ -177,8 +153,8 @@ class TestAddMetadataSong(TestCase):
 
     def renameAndAddMetadataToSongCall(self):
         self.renameFile(self.fileNameInput)
-        self.newFileNameWithPath = self.metadata_mp3.renameAndAddMetadataToSong(self.testDirectory, self.fileNameInput,
-                                                                                self.titleInput, self.artistInput, self.albumInput, self.website, self.date)
+        self.newFileNameWithPath = self.metadata_mp3.renameAndAddMetadata(os.path.join(self.testDirectory, self.fileNameInput), None,
+                                                                                self.titleInput, self.artistInput, self.albumInput, None, self.website, self.date)
 
     def checkSongMetadata(self, fileNameWithPath, isWebsite=True, isDate=True):
         self.assertTrue(os.path.isfile(fileNameWithPath))
@@ -429,7 +405,7 @@ class TestAddMetadataPlaylist(TestCase):
 
     def renameAndAddMetadataToPlatlistCall(self):
         self.renameFile(self.fileNameInput, self.playlistName)
-        return self.metadata_mp3.renameAndAddMetadataToPlaylist(
+        return self.metadata_mp3.renameAndAddMetadata(
             os.path.join(self.currentDirectory, self.playlistName, self.fileNameInput),1,
             self.titleInput, self.artistInput, "YT "+self.playlistName, self.albumInput, self.website, self.date)
 
