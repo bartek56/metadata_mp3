@@ -176,6 +176,32 @@ class MetadataManager:
 
         self._addMetadata(fileName, title, artist, album, albumArtist, website, trackNumber, date)
 
+    def delMetadata(self, fileName=None, *args):
+        if fileName == None:
+            fileName = self.fileName
+        else:
+            self.fileName = fileName
+
+        if not os.path.isfile(fileName):
+            print(bcolors.WARNING + "file doesn't exist: "+ fileName + bcolors.ENDC)
+            return False
+        audio = EasyID3(self.fileName)
+
+        aktualny_timestamp_dostepu = os.path.getatime(self.fileName)
+        aktualny_timestamp_modyfikacji = os.path.getmtime(self.fileName)
+        availablesKeys = EasyID3.valid_keys.keys()
+        availablesKeys = list(availablesKeys)
+        for x in args:
+            if x not in availablesKeys:
+                print(bcolors.FAIL + "Wrong key of ID3: " + x + bcolors.ENDC)
+            if x in audio:
+                del audio[x]
+            else:
+                print(bcolors.WARNING + "Argument to remove " + x + " doesn't exist" + bcolors.ENDC)
+        audio.save()
+        os.utime(self.fileName, (aktualny_timestamp_dostepu, aktualny_timestamp_modyfikacji))
+        return True
+
     def setMetadataArguments(self, fileName, **kwargs):
         """
         set metadata for song. put argument which one You want update
@@ -300,7 +326,7 @@ class MetadataManager:
         apic_tags = [tag for tag in audio.tags.keys() if tag.startswith('APIC')]
         if apic_tags:
             logger.warning("Cover exists in file %s", mp3File)
-            return
+            return False
 
         aktualny_timestamp_dostepu = os.path.getatime(mp3File)
         aktualny_timestamp_modyfikacji = os.path.getmtime(mp3File)
@@ -315,6 +341,7 @@ class MetadataManager:
 
         os.utime(mp3File, (aktualny_timestamp_dostepu, aktualny_timestamp_modyfikacji))
         logger.debug("Cover was added to %s file", mp3File)
+        return True
 
     def addCoverOfMp3ForAlbum(self, dir, image):
         filesList = [f for f in os.listdir(dir) if f.endswith("jpeg")]
@@ -329,7 +356,7 @@ class MetadataManager:
         apic_tags = [tag for tag in audio.tags.keys() if tag.startswith('APIC')]
         if not apic_tags:
             logger.debug("Cover doesn't exists in file %s", mp3File)
-            return
+            return False
 
         for tag in apic_tags:
             del audio.tags[tag]
@@ -337,6 +364,7 @@ class MetadataManager:
         os.utime(mp3File, (aktualny_timestamp_dostepu, aktualny_timestamp_modyfikacji))
 
         logger.info("Cover was removed in file %s", mp3File)
+        return True
 
     def updateMetadata(self, catalog, albumName=None):
         """
@@ -669,6 +697,8 @@ class MetadataManager:
 
 if __name__ == "__main__":
     md = MetadataManager()
-    md.showMp3InfoDir("/tmp/music/test2")
-    info = md.getMp3Info("/tmp/music/test2/KBP - 2. Smutny programista.mp3")
-    print(info)
+#    md.showMp3InfoDir("/tmp/music/test2")
+#    info = md.getMp3Info("/tmp/music/test2/KBP - 2. Smutny programista.mp3")
+    md.showMp3Info("/home/bbrzozowski/Music/Dla Ciebie.mp3")
+    md.delMetadata("/home/bbrzozowski/Music/Dla Ciebie.mp3", "artist", "album")
+    md.showMp3Info("/home/bbrzozowski/Music/Dla Ciebie.mp3")
